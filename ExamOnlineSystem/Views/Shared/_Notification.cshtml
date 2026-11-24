@@ -1,0 +1,23 @@
+@{
+    var success = TempData["success"] as string;
+    var error = TempData["error"] as string;
+}
+@if (!string.IsNullOrEmpty(success) || !string.IsNullOrEmpty(error))
+{
+    <script>
+        toastr.options = {
+            closeButton: true,
+            progressBar: true,
+            positionClass: "toast-top-right",
+            timeOut: 3000
+        };
+        @if (!string.IsNullOrEmpty(success))
+        {
+            @:toastr.success(@Json.Serialize(success));
+        }
+        @if (!string.IsNullOrEmpty(error))
+        {
+            @:toastr.error(@Json.Serialize(error));
+        }
+    </script>
+}

@@ -1,0 +1,37 @@
+@using ExamOnlineSystem.Models.ViewModels
+@model LichThiFormVM
+@{
+    ViewData["Title"] = "Sửa lịch thi";
+    var trangThai = ViewData["TrangThai"] as string;
+    var dangDienRa = trangThai == TrangThaiLichThi.DangDienRa;
+}
+
+<form asp-action="Edit" method="post" id="frmLichThi">
+    <input type="hidden" asp-for="Id" />
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <h3 class="text-black-50 mb-0">
+            <i class="bi bi-pencil-square"></i> Sửa lịch thi
+            <span class="badge fs-6 align-middle @(dangDienRa ? "text-bg-success" : "text-bg-info")">@trangThai</span>
+        </h3>
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle"></i> Lưu thay đổi</button>
+            <a asp-action="Index" class="btn btn-secondary"><i class="bi bi-x-circle"></i> Hủy</a>
+        </div>
+    </div>
+
+    @if (dangDienRa)
+    {
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle"></i>
+            Lịch thi <strong>đang diễn ra</strong>: chỉ sửa được tên, ghi chú và <strong>kéo dài giờ kết thúc</strong>.
+            Đề thi, giờ bắt đầu và lớp tham gia bị khóa vì sinh viên có thể đang làm bài.
+        </div>
+    }
+
+    <partial name="_LichThiForm" model="Model" />
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/lichthi-form.js" asp-append-version="true"></script>
+}

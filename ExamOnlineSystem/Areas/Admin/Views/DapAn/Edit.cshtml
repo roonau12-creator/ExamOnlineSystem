@@ -1,0 +1,100 @@
+@using ExamOnlineSystem.Models.ViewModels
+@model DapAnFormVM
+@{
+    ViewData["Title"] = "Sửa đáp án";
+    var cauHoi = (CauHoi)ViewData["CauHoi"]!;
+    var dapAns = ViewData["DapAns"] as List<DapAn> ?? new();
+    var dangSua = (int)ViewData["DapAnDangSua"]!;
+    var soDeThi = (int)(ViewData["SoDeThi"] ?? 0);
+    var viTri = dapAns.FindIndex(d => d.Id == dangSua);
+    var nhan = viTri >= 0 && viTri < 26 ? ((char)('A' + viTri)).ToString() : "?";
+    var urlHuy = Model.ReturnUrl ?? Url.Action("Details", "CauHoi", new { id = cauHoi.Id });
+}
+<div class="row justify-content-center">
+    <div class="col-lg-9 col-xl-7">
+        <div class="card shadow-sm">
+            <div class="card-header bg-info text-white">
+                <h4 class="mb-0"><i class="bi bi-pencil-square"></i> Sửa đáp án @nhan</h4>
+            </div>
+            <div class="card-body">
+                @if (soDeThi > 0)
+                {
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        Câu hỏi đang được dùng trong <strong>@soDeThi đề thi</strong>. Thay đổi sẽ áp dụng cho tất cả các đề thi này.
+                    </div>
+                }
+
+                @* Câu hỏi và các đáp án của câu (đáp án đang sửa được tô viền) *@
+                <div class="mb-3">
+                    <label class="form-label text-muted small mb-1">Câu hỏi</label>
+                    <div class="border rounded bg-light p-2">
+                        <a asp-controller="CauHoi" asp-action="Details" asp-route-id="@cauHoi.Id" class="text-reset">
+                            <span class="text-muted">#@cauHoi.Id</span>
+                        </a>
+                        <span style="white-space: pre-line">@cauHoi.NoiDung</span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-muted small mb-1">Các đáp án của câu hỏi</label>
+                    <ul class="list-group small">
+                        @for (var i = 0; i < dapAns.Count; i++)
+                        {
+                            var d = dapAns[i];
+                            var laDangSua = d.Id == dangSua;
+                            <li class="list-group-item d-flex gap-2 align-items-center @(d.DapAnDung ? "list-group-item-success" : "") @(laDangSua ? "border border-2 border-primary" : "")">
+                                <span class="badge rounded-pill @(d.DapAnDung ? "text-bg-success" : "text-bg-secondary")">@((char)('A' + i))</span>
+                                <span class="me-auto">@d.NoiDung</span>
+                                @if (laDangSua)
+                                {
+                                    <span class="badge text-bg-primary">Đang sửa</span>
+                                }
+                                else if (d.DapAnDung)
+                                {
+                                    <i class="bi bi-check-circle-fill text-success"></i>
+                                }
+                            </li>
+                        }
+                    </ul>
+                </div>
+
+                <form asp-action="Edit" method="post">
+                    <input type="hidden" asp-for="Id" />
+                    <input type="hidden" asp-for="CauHoiId" />
+                    <input type="hidden" asp-for="ReturnUrl" />
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="NoiDung" class="form-label"></label>
+                        <textarea asp-for="NoiDung" class="form-control" rows="3"></textarea>
+                        <span asp-validation-for="NoiDung" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-check mb-1">
+                        <input asp-for="DapAnDung" class="form-check-input" />
+                        <label asp-for="DapAnDung" class="form-check-label"></label>
+                    </div>
+                    <span asp-validation-for="DapAnDung" class="text-danger small d-block mb-3"></span>
+
+                    <div class="form-text mb-3">
+                        Muốn đổi thứ tự các đáp án, hãy dùng
+                        <a asp-controller="CauHoi" asp-action="Edit" asp-route-id="@cauHoi.Id">Sửa câu hỏi</a>.
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Lưu
+                        </button>
+                        <a href="@urlHuy" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Hủy
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

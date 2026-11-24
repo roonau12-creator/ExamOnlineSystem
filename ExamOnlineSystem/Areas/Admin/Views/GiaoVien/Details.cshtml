@@ -1,0 +1,253 @@
+@using ExamOnlineSystem.Utility
+@model ExamOnlineSystem.Models.ViewModels.GiaoVienDetailVM
+@{
+    var gv = Model.GiaoVien;
+    ViewData["Title"] = "Giảng viên " + gv.HoTen;
+    // Trang chi tiết bộ môn / khoa chỉ dành cho Admin
+    var laAdmin = User.IsInRole(SD.Role_Admin);
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h3 class="text-black-50 mb-0">Chi tiết giảng viên</h3>
+    <div class="d-flex flex-wrap gap-2">
+        <a asp-controller="ThongKe" asp-action="GiaoVienChiTiet" asp-route-id="@gv.Id" class="btn btn-outline-success">
+            <i class="bi bi-bar-chart"></i> Thống kê
+        </a>
+        @if (laAdmin)
+        {
+            <a asp-action="Edit" asp-route-id="@gv.Id" class="btn btn-primary"><i class="bi bi-pencil-square"></i> Sửa</a>
+            <button type="button" id="btnXoaGiaoVien" class="btn btn-outline-danger"
+                    data-url="@Url.Action("DeleteGiaoVien", new { id = gv.Id })"
+                    data-name="@gv.MaGiaoVien – @gv.HoTen"
+                    data-back="@Url.Action("Index")">
+                <i class="bi bi-trash3"></i> Xóa
+            </button>
+        }
+        <a asp-action="Index" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Quay lại danh sách</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-person-badge"></i> @gv.HoTen</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Mã giảng viên</dt>
+                    <dd class="col-sm-8">@gv.MaGiaoVien</dd>
+
+                    <dt class="col-sm-4">Chức danh</dt>
+                    <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(gv.ChucDanh) ? "—" : gv.ChucDanh)</dd>
+
+                    <dt class="col-sm-4">Email</dt>
+                    <dd class="col-sm-8">
+                        @if (string.IsNullOrEmpty(gv.Email)) { <span>—</span> }
+                        else { <a href="mailto:@gv.Email">@gv.Email</a> }
+                    </dd>
+
+                    <dt class="col-sm-4">Số điện thoại</dt>
+                    <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(gv.SoDienThoai) ? "—" : gv.SoDienThoai)</dd>
+
+                    <dt class="col-sm-4">Trạng thái</dt>
+                    <dd class="col-sm-8">
+                        @if (gv.DangHoatDong)
+                        {
+                            <span class="badge text-bg-success">Đang hoạt động</span>
+                        }
+                        else
+                        {
+                            <span class="badge text-bg-secondary"><i class="bi bi-lock-fill"></i> Đã khóa</span>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-4">Đăng nhập gần nhất</dt>
+                    <dd class="col-sm-8">@(gv.LanDangNhapCuoi?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "Chưa đăng nhập")</dd>
+
+                    <dt class="col-sm-4">Lớp học phần</dt>
+                    <dd class="col-sm-8">@Model.LopHocPhans.Count(l => l.LaNamHienTai) lớp trong năm học hiện tại</dd>
+
+                    <dt class="col-sm-4">Câu hỏi / Đề thi</dt>
+                    <dd class="col-sm-8 mb-0">@gv.SoCauHoi câu hỏi · @gv.SoDeThi đề thi</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100 border-info">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-diagram-3"></i> Thuộc bộ môn</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Bộ môn</dt>
+                    <dd class="col-sm-8">
+                        @if (laAdmin)
+                        {
+                            <a asp-controller="BoMon" asp-action="Details" asp-route-id="@gv.BoMonId" class="fw-semibold">@gv.TenBoMon</a>
+                        }
+                        else
+                        {
+                            <span class="fw-semibold">@gv.TenBoMon</span>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-4">Mã bộ môn</dt>
+                    <dd class="col-sm-8">@Model.MaBoMon</dd>
+
+                    <dt class="col-sm-4">Khoa</dt>
+                    <dd class="col-sm-8">
+                        @if (laAdmin && Model.KhoaId > 0)
+                        {
+                            <a asp-controller="Khoa" asp-action="Details" asp-route-id="@Model.KhoaId">@gv.TenKhoa</a>
+                        }
+                        else
+                        {
+                            <span>@gv.TenKhoa</span>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.MaKhoa))
+                        {
+                            <span class="text-muted">(@Model.MaKhoa)</span>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-4">Cùng bộ môn</dt>
+                    <dd class="col-sm-8 mb-0">@Model.DongNghieps.Count giảng viên khác</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+
+@{
+    var lhpNamNay = Model.LopHocPhans.Where(l => l.LaNamHienTai).ToList();
+    var lhpTruoc = Model.LopHocPhans.Where(l => !l.LaNamHienTai).ToList();
+    var soPhuTrach = lhpNamNay.Count(l => l.VaiTro == LopHocPhanVaiTro.PhuTrach);
+}
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <h5 class="mb-0"><i class="bi bi-journal-text"></i> Lớp học phần đang phụ trách</h5>
+            <span class="small text-muted">
+                Năm học hiện tại: <strong>@lhpNamNay.Count</strong> lớp
+                (@soPhuTrach phụ trách, @(lhpNamNay.Count - soPhuTrach) trợ giảng)
+            </span>
+        </div>
+    </div>
+    <div class="card-body">
+        @if (lhpNamNay.Count == 0)
+        {
+            <p class="text-muted mb-0"><i class="bi bi-info-circle"></i> Giảng viên chưa được phân công lớp học phần nào trong năm học hiện tại.</p>
+        }
+        else
+        {
+            <partial name="_BangLopHocPhan" model="lhpNamNay" />
+        }
+
+        @if (lhpTruoc.Count > 0)
+        {
+            <details class="mt-3">
+                <summary class="text-primary" role="button">Các năm học khác (@lhpTruoc.Count lớp)</summary>
+                <div class="mt-2">
+                    <partial name="_BangLopHocPhan" model="lhpTruoc" />
+                </div>
+            </details>
+        }
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white">
+        <h5 class="mb-0">Giảng viên cùng bộ môn @gv.TenBoMon</h5>
+    </div>
+    <div class="card-body">
+        @if (Model.DongNghieps.Count == 0)
+        {
+            <p class="text-muted mb-0"><i class="bi bi-info-circle"></i> Bộ môn chưa có giảng viên nào khác.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th class="bg-primary text-white-50 text-center">STT</th>
+                            <th class="bg-primary text-white-50">Mã giảng viên</th>
+                            <th class="bg-primary text-white-50">Họ tên</th>
+                            <th class="bg-primary text-white-50">Email</th>
+                            <th class="bg-primary text-white-50">Số điện thoại</th>
+                            <th class="bg-primary text-white-50"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (var i = 0; i < Model.DongNghieps.Count; i++)
+                        {
+                            var dn = Model.DongNghieps[i];
+                            <tr>
+                                <td class="text-center">@(i + 1)</td>
+                                <td>@dn.MaGiaoVien</td>
+                                <td>@dn.HoTen</td>
+                                <td>@dn.Email</td>
+                                <td>@dn.SoDienThoai</td>
+                                <td class="text-center">
+                                    <a asp-action="Details" asp-route-id="@dn.Id" class="btn btn-sm btn-outline-info">
+                                        <i class="bi bi-eye"></i> Xem
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@if (laAdmin)
+{
+    <form id="deleteForm" method="post">
+        @Html.AntiForgeryToken()
+    </form>
+}
+
+@section Scripts {
+    @if (laAdmin)
+    {
+        <script>
+            $("#btnXoaGiaoVien").on("click", function () {
+                var btn = this;
+                Swal.fire({
+                    title: "Bạn có chắc chắn?",
+                    text: "Giảng viên \"" + btn.dataset.name + "\" và tài khoản đăng nhập sẽ bị xóa, không thể hoàn tác!",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#d33",
+                    cancelButtonColor: "#6c757d",
+                    confirmButtonText: "Xóa",
+                    cancelButtonText: "Hủy",
+                    reverseButtons: true
+                }).then(function (result) {
+                    if (!result.isConfirmed) {
+                        return;
+                    }
+                    $.ajax({
+                        url: btn.dataset.url,
+                        type: "DELETE",
+                        headers: { "RequestVerificationToken": $("#deleteForm input[name='__RequestVerificationToken']").val() }
+                    }).done(function (res) {
+                        if (res.success) {
+                            toastr.success(res.message);
+                            setTimeout(function () { location.href = btn.dataset.back; }, 800);
+                        } else {
+                            Swal.fire({ icon: "error", title: "Không xóa được", text: res.message });
+                        }
+                    }).fail(function () {
+                        toastr.error("Có lỗi xảy ra khi xóa giảng viên");
+                    });
+                });
+            });
+        </script>
+    }
+}

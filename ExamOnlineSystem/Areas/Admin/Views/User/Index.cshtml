@@ -1,0 +1,73 @@
+@using ExamOnlineSystem.Utility
+@{
+    ViewData["Title"] = "Quản lý tài khoản";
+    var khoaList = ViewData["KhoaList"] as List<string> ?? new();
+}
+<div class="text-center text-black-50">
+    <h3>Quản lý tài khoản</h3>
+</div>
+
+@* Bộ lọc nhanh: lọc trực tiếp trên bảng (user.js) *@
+<div class="row g-2 align-items-center mb-3">
+    <div class="col-sm-6 col-md-3">
+        <select id="locVaiTro" class="form-select">
+            <option value="">-- Tất cả vai trò --</option>
+            @foreach (var r in VaiTroLabel.TatCa)
+            {
+                <option value="@VaiTroLabel.Ten(r)">@VaiTroLabel.Ten(r)</option>
+            }
+        </select>
+    </div>
+    <div class="col-sm-6 col-md-3">
+        <select id="locKhoa" class="form-select">
+            <option value="">-- Tất cả khoa --</option>
+            @foreach (var tenKhoa in khoaList)
+            {
+                <option value="@tenKhoa">@tenKhoa</option>
+            }
+        </select>
+    </div>
+    <div class="col-sm-6 col-md-3">
+        <select id="locTrangThai" class="form-select">
+            <option value="">-- Tất cả trạng thái --</option>
+            <option>Đang hoạt động</option>
+            <option>Đã khóa</option>
+        </select>
+    </div>
+    <div class="col-auto ms-auto">
+        <a asp-action="Create" class="btn btn-outline-danger"><i class="bi bi-person-plus"></i> Thêm tài khoản</a>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table id="tblUser" class="table table-bordered table-hover w-100">
+        <thead>
+            <tr>
+                <th class="bg-primary text-white-50">STT</th>
+                <th class="bg-primary text-white-50">Họ tên</th>
+                <th class="bg-primary text-white-50">Email (đăng nhập)</th>
+                <th class="bg-primary text-white-50">Số điện thoại</th>
+                <th class="bg-primary text-white-50">Vai trò</th>
+                <th class="bg-primary text-white-50">Khoa</th>
+                <th class="bg-primary text-white-50">Hồ sơ</th>
+                <th class="bg-primary text-white-50 text-center">Trạng thái</th>
+                <th class="bg-primary text-white-50">Đăng nhập gần nhất</th>
+                <th class="bg-primary text-white-50 text-center">Chức năng</th>
+            </tr>
+        </thead>
+    </table>
+</div>
+
+<div class="form-text mt-2">
+    <i class="bi bi-info-circle"></i>
+    Tài khoản không bị xóa để giữ nguyên dữ liệu đã tạo (câu hỏi, đề thi, bài làm) – khóa tài khoản
+    để chặn đăng nhập. Hồ sơ sinh viên / giảng viên được quản lý ở trang riêng.
+</div>
+
+<form id="deleteForm" method="post">
+    @Html.AntiForgeryToken()
+</form>
+
+@section Scripts {
+    <script src="~/js/user.js" asp-append-version="true"></script>
+}

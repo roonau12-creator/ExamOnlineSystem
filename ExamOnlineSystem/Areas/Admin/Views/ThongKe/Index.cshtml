@@ -1,0 +1,495 @@
+@using ExamOnlineSystem.Models.ViewModels
+@using ExamOnlineSystem.Utility
+@model ExamOnlineSystem.Models.ViewModels.ThongKeDashboardVM
+@{
+    ViewData["Title"] = "Dashboard thống kê";
+    var laQuanTri = User.IsInRole(SD.Role_Admin);
+
+    // Thời gian tương đối cho danh sách hoạt động gần đây
+    string TuongDoi(DateTime utc)
+    {
+        var khoang = Model.CapNhatLuc - utc;
+        if (khoang.TotalMinutes < 1)
+        {
+            return "vừa xong";
+        }
+        if (khoang.TotalMinutes < 60)
+        {
+            return $"{(int)khoang.TotalMinutes} phút trước";
+        }
+        if (khoang.TotalHours < 24)
+        {
+            return $"{(int)khoang.TotalHours} giờ trước";
+        }
+        if (khoang.TotalDays < 30)
+        {
+            return $"{(int)khoang.TotalDays} ngày trước";
+        }
+        return utc.ToLocalTime().ToString("dd/MM/yyyy");
+    }
+}
+
+<style>
+    /* Biểu đồ cột bằng CSS thuần (xem _BieuDoMocThoiGian.cshtml) */
+    .tk-hang { display: flex; align-items: stretch; gap: .5rem; }
+    /* Chừa 18px phía trên vùng vẽ để nhãn trực tiếp của cột cao nhất không đè lên chú giải */
+    .tk-y { flex: 0 0 36px; width: 36px; padding-top: 18px; display: flex; flex-direction: column;
+            justify-content: space-between; align-items: flex-end;
+            font-size: 11px; color: #6c757d; font-variant-numeric: tabular-nums; }
+    .tk-khung { position: relative; flex: 1 1 auto; min-width: 0; padding-top: 18px; }
+    .tk-luoi, .tk-nguong, .tk-cots { position: absolute; top: 18px; right: 0; bottom: 0; left: 0; }
+    .tk-luoi { display: flex; flex-direction: column; justify-content: space-between; }
+    .tk-luoi i { display: block; border-top: 1px solid rgba(0, 0, 0, .07); }
+    .tk-nguong { display: flex; flex-direction: column; }
+    .tk-nguong i { flex: 1 1 50%; border-bottom: 1px solid rgba(0, 0, 0, .18); }
+    .tk-cots { display: flex; align-items: stretch; gap: 6px; }
+    .tk-cot { position: relative; flex: 1 1 0; min-width: 0; border-radius: 4px; }
+    .tk-cot:hover, .tk-cot:focus-visible { background: rgba(13, 110, 253, .08); outline: none; }
+    .tk-cot-nay .tk-than { background: rgba(13, 110, 253, .07); }
+    .tk-than { height: 100%; width: min(100%, 26px); margin: 0 auto;
+               display: flex; flex-direction: column; justify-content: flex-end; }
+    .tk-doan { width: 100%; }
+    .tk-dinh { border-radius: 4px 4px 0 0; }
+    .tk-ho { margin-bottom: 2px; }            /* khe 2px giữa hai mảng màu, không dùng viền */
+    .tk-nhan { position: absolute; left: 0; right: 0; text-align: center;
+               font-size: 11px; line-height: 1.1; color: #212529; }
+    .tk-truc-x { display: flex; gap: 6px; flex: 1 1 auto; min-width: 0; padding-top: 4px; }
+    .tk-x { flex: 1 1 0; min-width: 0; text-align: center; font-size: 11px; color: #6c757d; line-height: 1.25; }
+    .tk-x-phu { min-height: 1em; font-size: 10px; }
+    .tk-o { display: inline-block; width: 10px; height: 10px; border-radius: 2px; }
+    .tk-bang { font-variant-numeric: tabular-nums; }
+
+    /* Màu dữ liệu: đã kiểm tra tương phản và khả năng phân biệt cho người mù màu */
+    .tk-nop { background: #0d6efd; }
+    .tk-chua { background: #fd7e14; }
+    .tk-diem { background: #6f42c1; }
+
+    .tk-the { transition: box-shadow .15s ease-in-out, transform .15s ease-in-out; }
+    a.tk-the:hover { box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .1) !important; transform: translateY(-2px); }
+</style>
+
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+    <div>
+        <h3 class="text-black-50 mb-1"><i class="bi bi-speedometer2"></i> Dashboard thống kê</h3>
+        <div class="small text-muted">
+            Toàn bộ số liệu hệ thống: tài khoản, nhân sự, danh mục, ngân hàng đề, lịch thi, kết quả chấm,
+            biểu đồ theo thời gian và hoạt động gần đây ·
+            cập nhật @Model.CapNhatLuc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+        </div>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-clockwise"></i> Làm mới
+        </a>
+        <a asp-action="GiaoVien" class="btn btn-outline-primary">
+            <i class="bi bi-graph-up-arrow"></i> Giảng viên
+        </a>
+        <a asp-action="SinhVien" class="btn btn-outline-primary">
+            <i class="bi bi-mortarboard"></i> Sinh viên
+        </a>
+        <a asp-action="Khoa" class="btn btn-outline-primary">
+            <i class="bi bi-building"></i> Khoa
+        </a>
+        <a asp-action="BoMon" class="btn btn-outline-primary">
+            <i class="bi bi-diagram-3"></i> Bộ môn
+        </a>
+    </div>
+</div>
+
+@* ===== Nhóm 1–5: tài khoản và tổ chức ===== *@
+<div class="row g-3 mb-3">
+    <div class="col-6 col-sm-4 col-xl">
+        <div class="card h-100 shadow-sm tk-the">
+            <div class="card-body py-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <span class="text-muted small">Tài khoản</span>
+                    <i class="bi bi-shield-lock text-primary"></i>
+                </div>
+                <div class="fs-3 fw-bold lh-1 mt-1">@Model.TongTaiKhoan</div>
+                <div class="small text-muted mt-1">
+                    @Model.SoTaiKhoanHoatDong hoạt động
+                    @if (Model.SoTaiKhoanDaKhoa > 0)
+                    {
+                        <span class="text-danger">· @Model.SoTaiKhoanDaKhoa đã khóa</span>
+                    }
+                </div>
+                <div class="small text-muted">
+                    @Model.SoTaiKhoanQuanTri quản trị · @Model.SoTaiKhoanGiangVien giảng viên ·
+                    @Model.SoTaiKhoanSinhVien sinh viên
+                </div>
+                <div class="small text-muted">
+                    @Model.SoTaiKhoanMoi30Ngay mới trong 30 ngày · @Model.SoDangNhap7Ngay đăng nhập trong 7 ngày
+                </div>
+                @if (Model.SoTaiKhoanChuaPhanQuyen > 0)
+                {
+                    <div class="small text-warning-emphasis">
+                        <i class="bi bi-exclamation-triangle"></i> @Model.SoTaiKhoanChuaPhanQuyen chưa phân quyền
+                    </div>
+                }
+                @if (laQuanTri)
+                {
+                    <a asp-controller="User" asp-action="Index" class="small text-decoration-none">
+                        Quản lý tài khoản <i class="bi bi-chevron-right"></i>
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-6 col-sm-4 col-xl">
+        <a asp-action="GiaoVien" class="card h-100 shadow-sm text-decoration-none text-body tk-the">
+            <div class="card-body py-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <span class="text-muted small">Giảng viên</span>
+                    <i class="bi bi-person-workspace text-info"></i>
+                </div>
+                <div class="fs-3 fw-bold lh-1 mt-1">@Model.TongGiaoVien</div>
+                <div class="small text-muted mt-1">
+                    @Model.SoGiaoVienDangHoatDong đang hoạt động
+                    @if (Model.SoGiaoVienDaKhoa > 0)
+                    {
+                        <span class="text-danger">· @Model.SoGiaoVienDaKhoa đã khóa</span>
+                    }
+                </div>
+                <div class="small text-muted">
+                    @Model.SoGiaoVienCoHoatDong đã soạn câu hỏi / đề thi
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-6 col-sm-4 col-xl">
+        <a asp-action="SinhVien" class="card h-100 shadow-sm text-decoration-none text-body tk-the">
+            <div class="card-body py-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <span class="text-muted small">Sinh viên</span>
+                    <i class="bi bi-mortarboard text-success"></i>
+                </div>
+                <div class="fs-3 fw-bold lh-1 mt-1">@Model.TongSinhVien</div>
+                <div class="small text-muted mt-1">
+                    @Model.TongLop lớp · @Model.SoSinhVienNam nam, @Model.SoSinhVienNu nữ
+                </div>
+                <div class="small text-muted">@Model.SoSinhVienDaThi sinh viên đã dự thi</div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-6 col-sm-4 col-xl">
+        <a asp-action="Khoa" class="card h-100 shadow-sm text-decoration-none text-body tk-the">
+            <div class="card-body py-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <span class="text-muted small">Khoa</span>
+                    <i class="bi bi-building text-primary"></i>
+                </div>
+                <div class="fs-3 fw-bold lh-1 mt-1">@Model.TongKhoa</div>
+                <div class="small text-muted mt-1">@Model.TongBoMon bộ môn trực thuộc</div>
+                <div class="small text-muted">@Model.TongLop lớp · @Model.TongMonHoc môn học</div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-6 col-sm-4 col-xl">
+        <a asp-action="BoMon" class="card h-100 shadow-sm text-decoration-none text-body tk-the">
+            <div class="card-body py-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <span class="text-muted small">Bộ môn</span>
+                    <i class="bi bi-diagram-3 text-secondary"></i>
+                </div>
+                <div class="fs-3 fw-bold lh-1 mt-1">@Model.TongBoMon</div>
+                <div class="small text-muted mt-1">
+                    TB @(Model.TongKhoa == 0 ? "0" : Math.Round((double)Model.TongBoMon / Model.TongKhoa, 1).ToString("0.#")) bộ môn/khoa
+                </div>
+                <div class="small text-muted">@Model.TongGiaoVien giảng viên</div>
+            </div>
+        </a>
+    </div>
+</div>
+
+@* ===== Nhóm 6–10: chương trình, đề thi và kết quả ===== *@
+<div class="row g-3 mb-3">
+    <div class="col-6 col-sm-4 col-xl">
+        <a asp-controller="MonHoc" asp-action="Index" class="card h-100 shadow-sm text-decoration-none text-body tk-the">
+            <div class="card-body py-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <span class="text-muted small">Môn học</span>
+                    <i class="bi bi-journal-bookmark text-info"></i>
+                </div>
+                <div class="fs-3 fw-bold lh-1 mt-1">@Model.TongMonHoc</div>
+                <div class="small text-muted mt-1">
+                    @Model.SoMonHocHoatDong đang hoạt động · @Model.TongHocPhan học phần
+                </div>
+                <div class="small text-muted">
+                    @Model.TongLopHocPhan lớp học phần · @Model.TongCauHoi câu hỏi
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-6 col-sm-4 col-xl">
+        <a asp-controller="DeThi" asp-action="Index" class="card h-100 shadow-sm text-decoration-none text-body tk-the">
+            <div class="card-body py-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <span class="text-muted small">Đề thi</span>
+                    <i class="bi bi-file-earmark-text text-primary"></i>
+                </div>
+                <div class="fs-3 fw-bold lh-1 mt-1">@Model.TongDeThi</div>
+                <div class="small text-muted mt-1">
+                    @Model.SoDeThiDaPhatHanh đã phát hành · @Model.SoDeThiChuaPhatHanh chưa phát hành
+                </div>
+                <div class="small text-muted">
+                    Ngân hàng: @Model.SoCauHoiTracNghiem trắc nghiệm, @Model.SoCauHoiTuLuan tự luận
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-6 col-sm-4 col-xl">
+        <a asp-controller="LichThi" asp-action="Index" class="card h-100 shadow-sm text-decoration-none text-body tk-the">
+            <div class="card-body py-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <span class="text-muted small">Lịch thi</span>
+                    <i class="bi bi-calendar-event text-warning"></i>
+                </div>
+                <div class="fs-3 fw-bold lh-1 mt-1">@Model.TongLichThi</div>
+                <div class="small text-muted mt-1">
+                    @if (Model.SoLichThiDangDienRa > 0)
+                    {
+                        <span class="badge text-bg-success">@Model.SoLichThiDangDienRa đang diễn ra</span>
+                    }
+                    else
+                    {
+                        <span>Không có ca thi đang diễn ra</span>
+                    }
+                </div>
+                <div class="small text-muted">
+                    @Model.SoLichThiSapToi sắp tới · @Model.SoLichThiDaKetThuc đã kết thúc
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-6 col-sm-4 col-xl">
+        <a asp-controller="KetQuaThi" asp-action="Index" class="card h-100 shadow-sm text-decoration-none text-body tk-the">
+            <div class="card-body py-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <span class="text-muted small">Lượt dự thi</span>
+                    <i class="bi bi-pencil-square text-success"></i>
+                </div>
+                <div class="fs-3 fw-bold lh-1 mt-1">@Model.TongLuotDuThi</div>
+                <div class="small text-muted mt-1">
+                    @Model.SoBaiDaNop đã nộp (@Model.TiLeNop%)
+                    @if (Model.SoDangLamBai > 0)
+                    {
+                        <span class="text-success">· @Model.SoDangLamBai đang làm bài</span>
+                    }
+                </div>
+                <div class="small text-muted">@Model.SoChuaThi chưa thi</div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-6 col-sm-4 col-xl">
+        <a asp-controller="KetQuaThi" asp-action="Index" class="card h-100 shadow-sm text-decoration-none text-body tk-the">
+            <div class="card-body py-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <span class="text-muted small">Kết quả chấm</span>
+                    <i class="bi bi-clipboard-data text-danger"></i>
+                </div>
+                <div class="fs-3 fw-bold lh-1 mt-1">@Model.SoBaiDaCham</div>
+                <div class="small text-muted mt-1">
+                    bài đã chấm
+                    @if (Model.SoBaiChuaCham > 0)
+                    {
+                        <span class="text-danger">· @Model.SoBaiChuaCham chưa chấm</span>
+                    }
+                </div>
+                <div class="small text-muted">
+                    Điểm TB @(Model.DiemTrungBinhHe10?.ToString("0.##") ?? "—")/10
+                    @if (Model.SoBaiDaCham > 0)
+                    {
+                        <text>· @Model.TiLeDat% đạt</text>
+                    }
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+@if (Model.SoBaiDaNop > 0)
+{
+    @* Tiến độ chấm bài *@
+    <div class="card shadow-sm mb-3">
+        <div class="card-body py-3">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                <span class="fw-semibold"><i class="bi bi-clipboard-check"></i> Tiến độ chấm bài</span>
+                <span class="small text-muted">
+                    @Model.SoBaiDaCham/@Model.SoBaiDaNop bài đã nộp được chấm (@Model.TiLeDaCham%)
+                    @if (Model.SoBaiChuaCham > 0)
+                    {
+                        <text>· còn @Model.SoBaiChuaCham bài chờ chấm</text>
+                    }
+                </span>
+            </div>
+            <div class="progress" role="progressbar" aria-label="Tỉ lệ bài đã chấm"
+                 aria-valuenow="@Model.TiLeDaCham" aria-valuemin="0" aria-valuemax="100" style="height:.6rem">
+                <div class="progress-bar" style="width:@Model.TiLeDaCham%; background-color:#0d6efd"></div>
+            </div>
+        </div>
+    </div>
+}
+
+@* ===== Nhóm 11: biểu đồ theo tháng – học kỳ – năm học ===== *@
+<div class="card shadow-sm mb-3">
+    <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <h5 class="mb-0"><i class="bi bi-bar-chart-line"></i> Biểu đồ thống kê</h5>
+        <ul class="nav nav-pills" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active btn-sm" id="tab-thang" data-bs-toggle="pill"
+                        data-bs-target="#pane-thang" type="button" role="tab"
+                        aria-controls="pane-thang" aria-selected="true">Theo tháng</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link btn-sm" id="tab-hocky" data-bs-toggle="pill"
+                        data-bs-target="#pane-hocky" type="button" role="tab"
+                        aria-controls="pane-hocky" aria-selected="false">Theo học kỳ</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link btn-sm" id="tab-namhoc" data-bs-toggle="pill"
+                        data-bs-target="#pane-namhoc" type="button" role="tab"
+                        aria-controls="pane-namhoc" aria-selected="false">Theo năm học</button>
+            </li>
+        </ul>
+    </div>
+    <div class="card-body">
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="pane-thang" role="tabpanel" aria-labelledby="tab-thang">
+                <p class="small text-muted">
+                    12 tháng gần nhất. Cột biểu diễn <strong>lượt dự thi</strong>, tính vào tháng diễn ra
+                    lịch thi; số lịch thi xem ở tooltip hoặc bảng số liệu.
+                </p>
+                <partial name="_BieuDoMocThoiGian" model="Model.TheoThang"/>
+            </div>
+            <div class="tab-pane fade" id="pane-hocky" role="tabpanel" aria-labelledby="tab-hocky">
+                <p class="small text-muted">
+                    Lịch thi chưa gắn trực tiếp với học kỳ nên được quy theo tháng diễn ra:
+                    tháng 9–12 và tháng 1 thuộc <strong>học kỳ 1</strong>, tháng 2–6 thuộc
+                    <strong>học kỳ 2</strong>, tháng 7–8 thuộc <strong>học kỳ hè</strong>.
+                    Số lớp học phần lấy trực tiếp theo học kỳ đã khai báo.
+                </p>
+                <partial name="_BieuDoMocThoiGian" model="Model.TheoHocKy"/>
+            </div>
+            <div class="tab-pane fade" id="pane-namhoc" role="tabpanel" aria-labelledby="tab-namhoc">
+                <p class="small text-muted">
+                    Mỗi lịch thi được quy về năm học chứa ngày thi (theo khoảng ngày bắt đầu – kết thúc
+                    của năm học). Chỉ hiện các năm học đã có hoạt động.
+                </p>
+                <partial name="_BieuDoMocThoiGian" model="Model.TheoNamHoc"/>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    @* ===== Phân bố xếp loại (thuộc nhóm 10) ===== *@
+    <div class="col-lg-5">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Phân bố xếp loại</h5>
+            </div>
+            <div class="card-body">
+                @if (Model.SoBaiDaCham == 0)
+                {
+                    <p class="text-muted small mb-0">
+                        <i class="bi bi-info-circle"></i> Chưa có bài thi nào được chấm điểm.
+                    </p>
+                }
+                else
+                {
+                    <div class="small text-muted mb-2">
+                        @Model.SoBaiDaCham bài đã chấm · điểm TB @(Model.DiemTrungBinhHe10?.ToString("0.##") ?? "—")/10
+                        (@Model.XepLoaiChung) · cao nhất @(Model.DiemCaoNhatHe10?.ToString("0.##") ?? "—") ·
+                        thấp nhất @(Model.DiemThapNhatHe10?.ToString("0.##") ?? "—")
+                    </div>
+                    foreach (var khung in Model.PhanBo)
+                    {
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between small">
+                                <span>@khung.XepLoai <span class="text-muted">(@khung.Nhan)</span></span>
+                                <span class="fw-semibold">@khung.SoLuong <span class="text-muted fw-normal">· @khung.TiLe%</span></span>
+                            </div>
+                            <div class="progress" role="progressbar" aria-label="Xếp loại @khung.XepLoai"
+                                 aria-valuenow="@khung.TiLe" aria-valuemin="0" aria-valuemax="100" style="height:.5rem">
+                                <div class="progress-bar bg-@khung.Mau" style="width:@khung.TiLe%"></div>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+
+    @* ===== Nhóm 12: hoạt động gần đây ===== *@
+    <div class="col-lg-7">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-clock-history"></i> Hoạt động gần đây</h5>
+            </div>
+            <div class="card-body p-0">
+                @if (Model.HoatDongGanDay.Count == 0)
+                {
+                    <p class="text-muted small m-3 mb-0">
+                        <i class="bi bi-info-circle"></i> Chưa có hoạt động nào được ghi nhận.
+                    </p>
+                }
+                else
+                {
+                    <div class="list-group list-group-flush" style="max-height:460px;overflow-y:auto">
+                        @foreach (var h in Model.HoatDongGanDay)
+                        {
+                            var coLienKet = h.Controller != null && h.Action != null && (!h.ChiQuanTri || laQuanTri);
+                            <div class="list-group-item d-flex gap-3 align-items-start py-2">
+                                <span class="d-inline-flex align-items-center justify-content-center rounded-circle
+                                             bg-@h.Mau bg-opacity-10 text-@h.Mau flex-shrink-0"
+                                      style="width:32px;height:32px" aria-hidden="true">
+                                    <i class="bi bi-@h.Icon"></i>
+                                </span>
+                                <div class="flex-grow-1" style="min-width:0">
+                                    <div class="d-flex flex-wrap justify-content-between gap-2">
+                                        <span class="fw-semibold small">
+                                            @if (coLienKet)
+                                            {
+                                                <a class="text-decoration-none"
+                                                   asp-controller="@h.Controller" asp-action="@h.Action"
+                                                   asp-route-id="@h.Id">@h.TieuDe</a>
+                                            }
+                                            else
+                                            {
+                                                @h.TieuDe
+                                            }
+                                        </span>
+                                        <span class="small text-muted text-nowrap"
+                                              title="@h.ThoiDiem.ToLocalTime().ToString("dd/MM/yyyy HH:mm")">
+                                            @TuongDoi(h.ThoiDiem)
+                                        </span>
+                                    </div>
+                                    <div class="small text-muted">
+                                        <span class="badge text-bg-light border me-1">@h.Loai</span>@h.MoTa
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Tooltip của biểu đồ: hiện khi trỏ chuột và khi focus bằng bàn phím
+        document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
+            new bootstrap.Tooltip(el, { container: 'body', trigger: 'hover focus' });
+        });
+    </script>
+}

@@ -1,0 +1,134 @@
+@using ExamOnlineSystem.Models.ViewModels
+@using ExamOnlineSystem.Utility
+@model XacNhanVaoThiVM
+@{
+    var k = Model.KyThi;
+    var sv = Model.SinhVien;
+    ViewData["Title"] = "Xác nhận vào thi";
+    var bd = k.ThoiGianBatDau.ToLocalTime();
+    var kt = k.ThoiGianKetThuc.ToLocalTime();
+    var giayDenGioMo = (k.ThoiGianBatDau - DateTime.UtcNow).TotalSeconds;
+}
+
+@* Layout công khai không bọc nội dung trong container -> tự bọc để có lề, không tràn ngang *@
+<div class="container-xl py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-9 col-xl-8">
+            <a asp-action="ChiTiet" asp-route-id="@k.LichThiId" class="small text-decoration-none">
+                <i class="bi bi-arrow-left"></i> Chi tiết kỳ thi
+            </a>
+            <h3 class="mt-2 mb-1"><i class="bi bi-shield-check"></i> Xác nhận vào thi</h3>
+            <div class="text-muted mb-3">@k.TenLichThi</div>
+
+            @* ===== Thí sinh & kỳ thi ===== *@
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="text-uppercase text-muted small fw-bold mb-1">Thí sinh</div>
+                            <div class="fw-semibold">@sv.HoTen</div>
+                            <div class="small text-muted">Mã SV @sv.MaSinhVien · Lớp @(sv.Lop?.MaLop ?? "—")</div>
+                            <div class="small text-muted">Ngày sinh @sv.NgaySinh.ToString("dd/MM/yyyy")</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-uppercase text-muted small fw-bold mb-1">Kỳ thi</div>
+                            <div class="fw-semibold">@k.TenMonHoc</div>
+                            <div class="small text-muted">@DeThiLabel.TenLoaiDeThi(k.LoaiDeThi) · @k.SoCauHoi câu · @k.TongDiem.ToString("0.##") điểm</div>
+                            <div class="small text-muted">Làm bài @k.ThoiLuong phút · mở @bd.ToString("HH:mm") – @kt.ToString("HH:mm"), @bd.ToString("dd/MM/yyyy")</div>
+                        </div>
+                    </div>
+                    <div class="small text-muted mt-2"><i class="bi bi-person-exclamation"></i> Nếu thông tin thí sinh không phải của bạn, hãy đăng xuất và báo giám thị.</div>
+                </div>
+            </div>
+
+            @* ===== Kiểm tra tự động ===== *@
+            <div class="card shadow-sm mb-3">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-list-check"></i> Kiểm tra trước khi thi</h5>
+                    @if (Model.SanSang)
+                    {
+                        <span class="badge text-bg-success"><i class="bi bi-check-circle"></i> Đủ điều kiện</span>
+                    }
+                    else
+                    {
+                        <span class="badge text-bg-danger"><i class="bi bi-x-circle"></i> Chưa đủ điều kiện</span>
+                    }
+                </div>
+                <ul class="list-group list-group-flush">
+                    @foreach (var kt2 in Model.KiemTras)
+                    {
+                        var (icon, mau, nhan) = kt2.MucDo switch
+                        {
+                            MucDoKiemTra.Dat => ("bi-check-circle-fill", "text-success", "Đạt"),
+                            MucDoKiemTra.CanhBao => ("bi-exclamation-triangle-fill", "text-warning", "Lưu ý"),
+                            _ => ("bi-x-circle-fill", "text-danger", "Không đạt")
+                        };
+                        <li class="list-group-item d-flex gap-3 align-items-start">
+                            <i class="bi @icon @mau fs-5" aria-hidden="true"></i>
+                            <div class="flex-grow-1">
+                                <div class="fw-semibold">@kt2.Ten <span class="visually-hidden">: @nhan</span></div>
+                                <div class="small text-muted">@kt2.MoTa</div>
+                            </div>
+                            <span class="small @mau fw-semibold text-nowrap">@nhan</span>
+                        </li>
+                    }
+                </ul>
+            </div>
+
+            @* ===== Cam kết + nút bắt đầu ===== *@
+            <div class="card shadow-sm">
+                <div class="card-header bg-white"><h5 class="mb-0"><i class="bi bi-journal-check"></i> Quy định phòng thi</h5></div>
+                <div class="card-body">
+                    <ul class="small ps-3">
+                        <li>Bài làm có @k.ThoiLuong phút kể từ lúc bấm bắt đầu, và phải nộp trước @kt.ToString("HH:mm").</li>
+                        <li>Tự làm bài, không trao đổi với người khác, không dùng tài liệu khi đề không cho phép.</li>
+                        <li>Giữ kết nối mạng ổn định; không mở nhiều tab làm bài cùng lúc.</li>
+                        <li>Có sự cố, báo ngay cho giảng viên @k.GiaoVien.</li>
+                    </ul>
+
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="chkCamKet" @(Model.SanSang ? "" : "disabled") />
+                        <label class="form-check-label" for="chkCamKet">
+                            Tôi xác nhận đúng là thí sinh trên, đã đọc và đồng ý với quy định phòng thi.
+                        </label>
+                    </div>
+
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <button type="button" id="btnBatDau" class="btn btn-success" disabled
+                                data-co-trang-lam-bai="@(Model.CoTrangLamBai ? "true" : "false")">
+                            <i class="bi bi-play-circle"></i> Bắt đầu làm bài
+                        </button>
+                        <a asp-action="ChiTiet" asp-route-id="@k.LichThiId" class="btn btn-outline-secondary">Quay lại</a>
+                    </div>
+
+                    @if (!Model.SanSang)
+                    {
+                        <div class="small text-danger mt-2"><i class="bi bi-info-circle"></i> Chưa thể vào thi. Xem các mục "Không đạt" ở trên.</div>
+                    }
+                    @if (!Model.CoTrangLamBai)
+                    {
+                        <div class="alert alert-info small mt-3 mb-0">
+                            <i class="bi bi-tools"></i> Chức năng làm bài trực tuyến đang được hoàn thiện, nên nút "Bắt đầu làm bài" tạm thời chưa dùng được.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Nút bắt đầu chỉ bật khi đủ điều kiện, đã tích cam kết và đã có trang làm bài
+        $("#chkCamKet").on("change", function () {
+            var coTrang = $("#btnBatDau").data("co-trang-lam-bai") === true;
+            $("#btnBatDau").prop("disabled", !(this.checked && coTrang));
+        });
+
+        // Chưa đến giờ mở bài (trong vòng 24 giờ): tự tải lại trang đúng lúc mở để kiểm tra lại
+        var giay = @((int)Math.Ceiling(giayDenGioMo));
+        if (giay > 0 && giay < 86400) {
+            setTimeout(function () { location.reload(); }, giay * 1000 + 1000);
+        }
+    </script>
+}

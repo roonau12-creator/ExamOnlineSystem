@@ -1,0 +1,159 @@
+@using ExamOnlineSystem.Models.ViewModels
+@using ExamOnlineSystem.Utility
+@model List<KiemTraTongDiemVM>
+@{
+    ViewData["Title"] = "Kiểm tra tổng điểm đề thi";
+    var tatCa = (bool)ViewData["TatCa"]!;
+    int soKhop = (int)ViewData["SoKhop"]!, soLech = (int)ViewData["SoLech"]!, soChua = (int)ViewData["SoChuaCoCau"]!;
+    var quayVe = Url.Action("KiemTraTongDiem", new { tatCa = tatCa ? true : (bool?)null });
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h3 class="text-black-50 mb-0"><i class="bi bi-clipboard-check"></i> Kiểm tra tổng điểm đề thi</h3>
+    <a asp-action="Index" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Danh sách đề thi</a>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-sm-4">
+        <div class="card border-success h-100"><div class="card-body py-2">
+            <div class="text-muted small">Khớp tổng điểm</div><div class="fs-4 fw-bold text-success">@soKhop</div>
+        </div></div>
+    </div>
+    <div class="col-sm-4">
+        <div class="card border-warning h-100"><div class="card-body py-2">
+            <div class="text-muted small">Lệch tổng điểm</div><div class="fs-4 fw-bold text-warning">@soLech</div>
+        </div></div>
+    </div>
+    <div class="col-sm-4">
+        <div class="card border-secondary h-100"><div class="card-body py-2">
+            <div class="text-muted small">Chưa có câu hỏi</div><div class="fs-4 fw-bold text-secondary">@soChua</div>
+        </div></div>
+    </div>
+</div>
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+    <div class="small text-muted">
+        Tổng điểm đề phải bằng tổng điểm các câu thì đề mới phát hành được.
+        Với đề nháp, có thể sửa nhanh bằng một trong hai cách ở cột <strong>Sửa nhanh</strong>.
+    </div>
+    <div class="btn-group btn-group-sm">
+        <a asp-action="KiemTraTongDiem" class="btn @(tatCa ? "btn-outline-secondary" : "btn-secondary")">Chỉ đề có vấn đề</a>
+        <a asp-action="KiemTraTongDiem" asp-route-tatCa="true" class="btn @(tatCa ? "btn-secondary" : "btn-outline-secondary")">Tất cả đề</a>
+    </div>
+</div>
+
+@if (Model.Count == 0)
+{
+    <div class="alert alert-success"><i class="bi bi-check-circle-fill"></i> Tất cả đề thi đều khớp tổng điểm.</div>
+}
+else
+{
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th class="bg-primary text-white-50">Đề thi</th>
+                        <th class="bg-primary text-white-50">Trạng thái</th>
+                        <th class="bg-primary text-white-50 text-center">Số câu</th>
+                        <th class="bg-primary text-white-50 text-center">Tổng điểm các câu</th>
+                        <th class="bg-primary text-white-50 text-center">Tổng điểm đề</th>
+                        <th class="bg-primary text-white-50 text-center">Chênh lệch</th>
+                        <th class="bg-primary text-white-50">Sửa nhanh</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var x in Model)
+                    {
+                        var d = x.DeThi;
+                        <tr class="@(x.TinhTrang == TinhTrangDiem.Lech ? "table-warning" : "")">
+                            <td>
+                                <a asp-action="Details" asp-route-id="@d.Id" class="fw-semibold text-decoration-none">@d.MaDeThi</a>
+                                <div class="small text-muted">@d.TenDeThi · @d.TenMonHoc</div>
+                            </td>
+                            <td class="text-nowrap">
+                                @if (d.DaPhatHanh)
+                                {
+                                    <span class="badge text-bg-success">Đã phát hành</span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-light text-secondary border">Nháp</span>
+                                }
+                            </td>
+                            <td class="text-center">@d.SoCauHoi</td>
+                            <td class="text-center">@Math.Round(d.TongDiemCauHoi, 2)</td>
+                            <td class="text-center">@d.TongDiem</td>
+                            <td class="text-center text-nowrap">
+                                @switch (x.TinhTrang)
+                                {
+                                    case TinhTrangDiem.Khop:
+                                        <span class="text-success"><i class="bi bi-check-circle-fill"></i> Khớp</span>
+                                        break;
+                                    case TinhTrangDiem.ChuaCoCau:
+                                        <span class="text-secondary">Chưa có câu</span>
+                                        break;
+                                    default:
+                                        <span class="fw-semibold text-warning-emphasis">
+                                            @(x.ChenhLech > 0 ? $"thừa {x.ChenhLech}" : $"thiếu {-x.ChenhLech}") điểm
+                                        </span>
+                                        break;
+                                }
+                            </td>
+                            <td>
+                                @if (x.TinhTrang == TinhTrangDiem.Khop)
+                                {
+                                    <span class="text-muted small">—</span>
+                                }
+                                else if (!x.DuocSua)
+                                {
+                                    <span class="text-muted small" title="Đề đã phát hành hoặc không phải đề của bạn"><i class="bi bi-lock-fill"></i> Không sửa được</span>
+                                }
+                                else if (x.TinhTrang == TinhTrangDiem.ChuaCoCau)
+                                {
+                                    <a asp-controller="CauHoiDeThi" asp-action="Create" asp-route-deThiId="@d.Id" class="btn btn-sm btn-outline-success">
+                                        <i class="bi bi-plus-lg"></i> Thêm câu hỏi
+                                    </a>
+                                }
+                                else
+                                {
+                                    <div class="d-flex flex-wrap gap-1">
+                                        <form asp-action="DatTongDiemTheoCau" asp-route-id="@d.Id" asp-route-returnUrl="@quayVe" method="post" class="d-inline frm-sua-nhanh"
+                                              data-hoi="Đặt tổng điểm đề @d.MaDeThi từ @d.TongDiem thành @Math.Round(d.TongDiemCauHoi, 2) (bằng tổng điểm các câu)?">
+                                            <button type="submit" class="btn btn-sm btn-outline-primary" title="Giữ nguyên điểm các câu, sửa tổng điểm đề">
+                                                Tổng đề = @Math.Round(d.TongDiemCauHoi, 2)
+                                            </button>
+                                        </form>
+                                        <form asp-action="CoGianDiemCau" asp-route-id="@d.Id" asp-route-returnUrl="@quayVe" method="post" class="d-inline frm-sua-nhanh"
+                                              data-hoi="Co giãn điểm @d.SoCauHoi câu của đề @d.MaDeThi theo tỷ lệ hiện tại để tổng bằng @d.TongDiem điểm?">
+                                            <button type="submit" class="btn btn-sm btn-outline-primary" title="Giữ nguyên tổng điểm đề, co giãn điểm các câu theo tỷ lệ">
+                                                Co giãn câu → @d.TongDiem
+                                            </button>
+                                        </form>
+                                        <a asp-controller="CauHoiDeThi" asp-action="PhanBoDiem" asp-route-deThiId="@d.Id" class="btn btn-sm btn-outline-secondary" title="Phân bổ điểm từng câu">
+                                            <i class="bi bi-calculator"></i>
+                                        </a>
+                                    </div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        // Xác nhận trước khi sửa nhanh
+        $(".frm-sua-nhanh").on("submit", function (e) {
+            var form = this;
+            if (form.dataset.ok) return;
+            e.preventDefault();
+            Swal.fire({ title: "Sửa tổng điểm?", text: form.dataset.hoi, icon: "question", showCancelButton: true,
+                        confirmButtonText: "Đồng ý", cancelButtonText: "Hủy", reverseButtons: true })
+                .then(function (r) { if (r.isConfirmed) { form.dataset.ok = "1"; form.submit(); } });
+        });
+    </script>
+}

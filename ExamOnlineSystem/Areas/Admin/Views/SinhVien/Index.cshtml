@@ -1,0 +1,56 @@
+@{
+    ViewData["Title"] = "Danh sách sinh viên";
+    var lopList = ViewData["LopList"] as List<Lop> ?? new();
+}
+<div class="text-center text-black-50">
+    <h3>Danh sách sinh viên</h3>
+</div>
+
+@* Bộ lọc: lọc trực tiếp trên bảng (sinhvien.js); chọn khoa thì ô Lớp chỉ còn lớp của khoa đó *@
+<div class="row g-2 align-items-center justify-content-between mb-3">
+    <div class="col-sm-6 col-md-3">
+        <select id="locKhoa" class="form-select" asp-items='ViewData["KhoaList"] as SelectList'>
+            <option value="">-- Tất cả khoa --</option>
+        </select>
+    </div>
+    <div class="col-sm-6 col-md-3">
+        <select id="locLop" class="form-select">
+            <option value="">-- Tất cả lớp --</option>
+            @foreach (var lop in lopList)
+            {
+                <option value="@lop.MaLop" data-khoa="@lop.KhoaId">@lop.MaLop</option>
+            }
+        </select>
+    </div>
+    <div class="col-auto ms-auto">
+        <a asp-action="Import" class="btn btn-outline-success"><i class="bi bi-file-earmark-excel"></i> Nhập từ Excel</a>
+        <a asp-action="Create" class="btn btn-outline-danger"><i class="bi bi-person-plus"></i> Thêm sinh viên</a>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table id="tblSinhVien" class="table table-bordered table-hover w-100">
+        <thead>
+            <tr>
+                <th class="bg-primary text-white-50">STT</th>
+                <th class="bg-primary text-white-50">Mã sinh viên</th>
+                <th class="bg-primary text-white-50">Họ tên</th>
+                <th class="bg-primary text-white-50">Ngày sinh</th>
+                <th class="bg-primary text-white-50">Giới tính</th>
+                <th class="bg-primary text-white-50">Lớp</th>
+                <th class="bg-primary text-white-50">Khoa</th>
+                <th class="bg-primary text-white-50">Email</th>
+                <th class="bg-primary text-white-50">Số điện thoại</th>
+                <th class="bg-primary text-white-50">Chức năng</th>
+            </tr>
+        </thead>
+    </table>
+</div>
+
+<form id="deleteForm" method="post">
+    @Html.AntiForgeryToken()
+</form>
+
+@section Scripts {
+    <script src="~/js/sinhvien.js" asp-append-version="true"></script>
+}

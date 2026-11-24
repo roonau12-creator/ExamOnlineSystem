@@ -1,0 +1,154 @@
+@using ExamOnlineSystem.Models.ViewModels
+@using ExamOnlineSystem.Utility
+@model DanhMucCauHoiDetailVM
+@{
+    ViewData["Title"] = "Chi tiết danh mục " + Model.DanhMuc.TenDanhMuc;
+    var dm = Model.DanhMuc;
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h3 class="text-black-50 mb-0">Chi tiết danh mục câu hỏi</h3>
+    <div class="d-flex gap-2">
+        <a asp-action="Edit" asp-route-id="@dm.Id" class="btn btn-primary"><i class="bi bi-pencil-square"></i> Sửa</a>
+        <a asp-action="Index" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Quay lại danh sách</a>
+    </div>
+</div>
+
+@* Đường dẫn các cấp: Môn học › gốc › ... › danh mục hiện tại *@
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">@(dm.MonHoc?.TenMonHoc ?? "—")</li>
+        @foreach (var t in Model.ToTien)
+        {
+            <li class="breadcrumb-item"><a asp-action="Details" asp-route-id="@t.Id">@t.TenDanhMuc</a></li>
+        }
+        <li class="breadcrumb-item active" aria-current="page">@dm.TenDanhMuc</li>
+    </ol>
+</nav>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="bi bi-folder2-open"></i> @dm.TenDanhMuc</h5>
+    </div>
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-3">Tên danh mục</dt>
+            <dd class="col-sm-9">@dm.TenDanhMuc</dd>
+
+            <dt class="col-sm-3">Môn học</dt>
+            <dd class="col-sm-9">@(dm.MonHoc?.TenMonHoc ?? "—")</dd>
+
+            <dt class="col-sm-3">Danh mục cha</dt>
+            <dd class="col-sm-9">
+                @if (dm.DanhMucCha != null)
+                {
+                    <a asp-action="Details" asp-route-id="@dm.DanhMucCha.Id">@dm.DanhMucCha.TenDanhMuc</a>
+                }
+                else
+                {
+                    <span class="text-muted fst-italic">(Danh mục gốc)</span>
+                }
+            </dd>
+
+            <dt class="col-sm-3">Cấp</dt>
+            <dd class="col-sm-9">@Model.Cap</dd>
+
+            <dt class="col-sm-3">Mô tả</dt>
+            <dd class="col-sm-9">@(string.IsNullOrWhiteSpace(dm.MoTa) ? "—" : dm.MoTa)</dd>
+
+            <dt class="col-sm-3">Số câu hỏi</dt>
+            <dd class="col-sm-9 mb-0">@Model.CauHois.Count câu hỏi</dd>
+        </dl>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Danh mục con</h5>
+            <a asp-action="Create" asp-route-chaId="@dm.Id" class="btn btn-sm btn-outline-danger">
+                <i class="bi bi-plus-circle"></i> Thêm danh mục con
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        @if (Model.DanhMucCons.Count == 0)
+        {
+            <p class="text-muted mb-0"><i class="bi bi-info-circle"></i> Danh mục chưa có danh mục con nào.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th class="bg-primary text-white-50 text-center">STT</th>
+                            <th class="bg-primary text-white-50">Tên danh mục</th>
+                            <th class="bg-primary text-white-50">Mô tả</th>
+                            <th class="bg-primary text-white-50"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (var i = 0; i < Model.DanhMucCons.Count; i++)
+                        {
+                            var con = Model.DanhMucCons[i];
+                            <tr>
+                                <td class="text-center">@(i + 1)</td>
+                                <td>@con.TenDanhMuc</td>
+                                <td>@con.MoTa</td>
+                                <td class="text-center text-nowrap">
+                                    <a asp-action="Details" asp-route-id="@con.Id" class="btn btn-sm btn-outline-info">
+                                        <i class="bi bi-eye"></i> Chi tiết
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white">
+        <h5 class="mb-0">Danh sách câu hỏi</h5>
+    </div>
+    <div class="card-body">
+        @if (Model.CauHois.Count == 0)
+        {
+            <p class="text-muted mb-0"><i class="bi bi-info-circle"></i> Danh mục chưa có câu hỏi nào.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th class="bg-primary text-white-50 text-center">STT</th>
+                            <th class="bg-primary text-white-50">Nội dung</th>
+                            <th class="bg-primary text-white-50">Loại câu hỏi</th>
+                            <th class="bg-primary text-white-50">Mức độ</th>
+                            <th class="bg-primary text-white-50">Điểm mặc định</th>
+                            <th class="bg-primary text-white-50">Giảng viên</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (var i = 0; i < Model.CauHois.Count; i++)
+                        {
+                            var ch = Model.CauHois[i];
+                            <tr>
+                                <td class="text-center">@(i + 1)</td>
+                                <td>@ch.NoiDung</td>
+                                <td>@CauHoiLabel.TenLoaiCauHoi(ch.LoaiCauHoi)</td>
+                                <td>@CauHoiLabel.TenMucDo(ch.MucDo)</td>
+                                <td>@ch.DiemMacDinh</td>
+                                <td>@(ch.GiaoVien?.HoTen ?? "—")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

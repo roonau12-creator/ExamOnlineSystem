@@ -1,0 +1,179 @@
+@model ExamOnlineSystem.Models.ViewModels.PhanGiaoVienVaoBoMonVM
+@{
+    var boMon = Model.BoMon;
+    ViewData["Title"] = "Gán giảng viên vào " + boMon.TenBoMon;
+    var khoaNgoai = Model.NgoaiBoMon.Select(g => new { g.KhoaId, g.TenKhoa }).Distinct().OrderBy(k => k.TenKhoa).ToList();
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h3 class="text-black-50 mb-0"><i class="bi bi-person-plus"></i> Gán giảng viên vào bộ môn</h3>
+    <div class="d-flex flex-wrap gap-2">
+        <a asp-action="Details" asp-route-id="@boMon.Id" class="btn btn-outline-info"><i class="bi bi-eye"></i> Chi tiết bộ môn</a>
+        <a asp-action="Index" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Quay lại danh sách</a>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body py-3">
+        <div class="row g-3 align-items-center">
+            <div class="col-md">
+                <h5 class="mb-1"><i class="bi bi-diagram-3"></i> @boMon.MaBoMon – @boMon.TenBoMon</h5>
+                <div class="text-muted small">Khoa: @(boMon.Khoa?.TenKhoa ?? "—")</div>
+            </div>
+            <div class="col-md-auto">
+                <span class="badge bg-primary fs-6">Số giảng viên hiện tại: @Model.TrongBoMon.Count</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    @* ----- Cột trái: giảng viên ở bộ môn khác -> gán vào bộ môn này ----- *@
+    <div class="col-xl-6">
+        <form asp-action="GanGiaoVien" method="post" id="frmGan" class="frm-chon"
+              data-khoa-id="@boMon.KhoaId" data-ten-bo-mon="@boMon.TenBoMon">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="boMonId" value="@boMon.Id" />
+
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                        <h5 class="mb-0">Giảng viên ở bộ môn khác</h5>
+                        <button type="submit" class="btn btn-sm btn-danger btn-luu" disabled>
+                            <i class="bi bi-box-arrow-in-right"></i> Gán <span class="so-chon">0</span> giảng viên vào bộ môn này
+                        </button>
+                    </div>
+                    <div class="row g-2 mt-2">
+                        <div class="col-md-7">
+                            <input class="form-control form-control-sm o-tim" placeholder="Tìm mã GV, họ tên, email, bộ môn..." />
+                        </div>
+                        <div class="col-md-5">
+                            <select class="form-select form-select-sm o-loc-khoa">
+                                <option value="">Tất cả khoa</option>
+                                @foreach (var k in khoaNgoai)
+                                {
+                                    <option value="@k.KhoaId">@k.TenKhoa</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-wrap align-items-center gap-2 mt-2 small">
+                        <button type="button" class="btn btn-sm btn-outline-primary btn-chon-tat-ca"><i class="bi bi-check2-all"></i> Chọn tất cả đang hiện</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary btn-bo-chon"><i class="bi bi-x-lg"></i> Bỏ chọn</button>
+                        <span class="ms-auto text-muted o-dem"></span>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush ds-gv" style="max-height: 520px; overflow-y: auto">
+                        @if (Model.NgoaiBoMon.Count == 0)
+                        {
+                            <div class="list-group-item text-muted"><i class="bi bi-info-circle"></i> Không có giảng viên nào ở bộ môn khác.</div>
+                        }
+                        @foreach (var gv in Model.NgoaiBoMon)
+                        {
+                            <label class="list-group-item d-flex gap-2 align-items-start dong-gv"
+                                   data-khoa="@gv.KhoaId"
+                                   data-tim="@($"{gv.MaGiaoVien} {gv.HoTen} {gv.Email} {gv.TenBoMon}".ToLower())">
+                                <input type="checkbox" name="giaoVienIds" value="@gv.Id" class="form-check-input mt-1 flex-shrink-0" />
+                                <span class="flex-grow-1">
+                                    <span class="fw-semibold">@gv.MaGiaoVien</span> – @gv.HoTen
+                                    @if (!gv.DangHoatDong)
+                                    {
+                                        <span class="badge text-bg-secondary ms-1"><i class="bi bi-lock-fill"></i> Đã khóa</span>
+                                    }
+                                    <br />
+                                    <small class="text-muted"><i class="bi bi-diagram-3"></i> @gv.TenBoMon · @gv.TenKhoa · @gv.Email</small>
+                                </span>
+                            </label>
+                        }
+                    </div>
+                </div>
+                <div class="card-footer bg-white small text-muted">
+                    <i class="bi bi-info-circle"></i> Giảng viên khác khoa sẽ được đổi khoa theo khoa của bộ môn
+                    <strong>@(boMon.Khoa?.TenKhoa ?? "—")</strong>.
+                </div>
+            </div>
+        </form>
+    </div>
+
+    @* ----- Cột phải: giảng viên của bộ môn này -> chuyển sang bộ môn khác ----- *@
+    <div class="col-xl-6">
+        <form asp-action="ChuyenGiaoVien" method="post" id="frmChuyen" class="frm-chon">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="boMonId" value="@boMon.Id" />
+
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                        <h5 class="mb-0">Giảng viên của @boMon.TenBoMon</h5>
+                        <a asp-controller="GiaoVien" asp-action="Create" asp-route-boMonId="@boMon.Id" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-person-plus"></i> Thêm giảng viên mới
+                        </a>
+                    </div>
+                    <div class="row g-2 mt-2">
+                        <div class="col-md-5">
+                            <input class="form-control form-control-sm o-tim" placeholder="Tìm mã GV, họ tên, email..." />
+                        </div>
+                        <div class="col-md-4">
+                            <select name="boMonDichId" id="boMonDichId" class="form-select form-select-sm">
+                                <option value="">-- Chuyển sang bộ môn --</option>
+                                @foreach (var nhom in Model.BoMonKhac.GroupBy(b => b.Khoa?.TenKhoa ?? "Khác"))
+                                {
+                                    <optgroup label="@nhom.Key">
+                                        @foreach (var b in nhom)
+                                        {
+                                            <option value="@b.Id">@b.MaBoMon – @b.TenBoMon</option>
+                                        }
+                                    </optgroup>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-sm btn-primary w-100 btn-luu" disabled>
+                                <i class="bi bi-box-arrow-right"></i> Chuyển <span class="so-chon">0</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-wrap align-items-center gap-2 mt-2 small">
+                        <button type="button" class="btn btn-sm btn-outline-primary btn-chon-tat-ca"><i class="bi bi-check2-all"></i> Chọn tất cả đang hiện</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary btn-bo-chon"><i class="bi bi-x-lg"></i> Bỏ chọn</button>
+                        <span class="ms-auto text-muted o-dem"></span>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush ds-gv" style="max-height: 520px; overflow-y: auto">
+                        @if (Model.TrongBoMon.Count == 0)
+                        {
+                            <div class="list-group-item text-muted"><i class="bi bi-info-circle"></i> Bộ môn chưa có giảng viên nào.</div>
+                        }
+                        @foreach (var gv in Model.TrongBoMon)
+                        {
+                            <label class="list-group-item d-flex gap-2 align-items-start dong-gv"
+                                   data-khoa="@gv.KhoaId"
+                                   data-tim="@($"{gv.MaGiaoVien} {gv.HoTen} {gv.Email}".ToLower())">
+                                <input type="checkbox" name="giaoVienIds" value="@gv.Id" class="form-check-input mt-1 flex-shrink-0" />
+                                <span class="flex-grow-1">
+                                    <span class="fw-semibold">@gv.MaGiaoVien</span> – @gv.HoTen
+                                    @if (!string.IsNullOrWhiteSpace(gv.ChucDanh))
+                                    {
+                                        <span class="badge bg-light text-dark border ms-1">@gv.ChucDanh</span>
+                                    }
+                                    <br />
+                                    <small class="text-muted">@gv.Email · @gv.SoDienThoai</small>
+                                </span>
+                            </label>
+                        }
+                    </div>
+                </div>
+                <div class="card-footer bg-white small text-muted">
+                    <i class="bi bi-info-circle"></i> Mỗi giảng viên luôn thuộc một bộ môn, nên muốn bỏ giảng viên khỏi bộ môn
+                    thì phải chọn bộ môn chuyển đến.
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/bomon-phangiaovien.js" asp-append-version="true"></script>
+}

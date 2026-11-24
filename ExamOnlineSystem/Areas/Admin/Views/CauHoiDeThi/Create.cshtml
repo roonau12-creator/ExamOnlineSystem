@@ -1,0 +1,112 @@
+@using ExamOnlineSystem.Models.ViewModels
+@model ThemNhieuCauVM
+@{
+    ViewData["Title"] = "Thêm câu hỏi vào đề thi";
+    var cacDe = ViewData["DeThiList"] as List<DeThiListItemVM> ?? new();
+    var loiCau = ViewData.ModelState[nameof(ThemNhieuCauVM.Cau)]?.Errors;
+}
+
+<form asp-action="Create" method="post" id="frmThemNhieu">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <h3 class="text-black-50 mb-0"><i class="bi bi-plus-circle"></i> Thêm câu hỏi vào đề thi</h3>
+        <div class="d-flex flex-wrap gap-2">
+            <button type="submit" class="btn btn-primary btn-luu" disabled><i class="bi bi-check-circle"></i> Thêm <span class="so-chon">0</span> câu</button>
+            <button type="submit" name="ThemTiep" value="true" class="btn btn-outline-primary btn-luu" disabled>
+                <i class="bi bi-plus-circle"></i> Thêm &amp; chọn tiếp
+            </button>
+            <a asp-action="Index" asp-route-deThiId="@(Model.DeThiId > 0 ? Model.DeThiId : null)" class="btn btn-secondary"><i class="bi bi-x-circle"></i> Hủy</a>
+        </div>
+    </div>
+
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    @if (loiCau != null && loiCau.Count > 0)
+    {
+        <div class="alert alert-danger py-2">
+            <strong>Chưa thêm câu nào:</strong>
+            <ul class="mb-0">
+                @foreach (var e in loiCau)
+                {
+                    <li>@e.ErrorMessage</li>
+                }
+            </ul>
+        </div>
+    }
+
+    @if (cacDe.Count == 0)
+    {
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle"></i>
+            Không có đề nháp nào bạn được phép thêm câu (đề đã phát hành cần hủy phát hành trước).
+        </div>
+    }
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-lg-7">
+                    <label asp-for="DeThiId" class="form-label"></label>
+                    <select asp-for="DeThiId" class="form-select">
+                        <option value="">-- Chọn đề thi (đề nháp) --</option>
+                        @foreach (var d in cacDe)
+                        {
+                            <option value="@d.Id">@d.MaDeThi – @d.TenDeThi (@d.TenMonHoc, @d.SoCauHoi câu)</option>
+                        }
+                    </select>
+                    <span asp-validation-for="DeThiId" class="text-danger"></span>
+                </div>
+                <div class="col-lg-5">
+                    <label asp-for="ViTri" class="form-label"></label>
+                    <select asp-for="ViTri" class="form-select" data-chon="@Model.ViTri">
+                        <option value="">Cuối đề</option>
+                    </select>
+                    <div class="form-text">Chèn vào giữa: cả nhóm câu mới bắt đầu từ vị trí đã chọn, các câu cũ phía sau lùi xuống.</div>
+                </div>
+            </div>
+            <div id="tongDiem" class="alert py-2 small mt-3 mb-0 d-none"></div>
+        </div>
+    </div>
+
+    @* Danh sách câu có thể thêm (cauhoidethi-form.js); câu đã chọn ban đầu (khi form trả về do lỗi) nằm trong data-chon *@
+    <div class="card shadow-sm d-none" id="khungChon" data-chon="@Json.Serialize(Model.Cau).ToString()">
+        <div class="card-header bg-white">
+            <div class="row g-2 align-items-center">
+                <div class="col-md-4">
+                    <input id="timCau" class="form-control form-control-sm" placeholder="Tìm theo nội dung, #mã..." />
+                </div>
+                <div class="col-md-4">
+                    <select id="locDanhMuc" class="form-select form-select-sm">
+                        <option value="">Tất cả danh mục</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select id="locMucDo" class="form-select form-select-sm">
+                        <option value="">Mọi mức độ</option>
+                        <option value="1">Dễ</option>
+                        <option value="2">Trung bình</option>
+                        <option value="3">Khó</option>
+                        <option value="4">Rất khó</option>
+                    </select>
+                </div>
+                <div class="col-md-2 form-check ps-5">
+                    <input type="checkbox" class="form-check-input" id="anKhongThem" checked />
+                    <label for="anKhongThem" class="form-check-label small">Ẩn câu không thêm được</label>
+                </div>
+            </div>
+            <div class="d-flex flex-wrap align-items-center gap-2 mt-2 small">
+                <button type="button" id="chonTatCa" class="btn btn-sm btn-outline-primary"><i class="bi bi-check2-all"></i> Chọn tất cả câu đang hiện</button>
+                <button type="button" id="boChon" class="btn btn-sm btn-outline-secondary"><i class="bi bi-x-lg"></i> Bỏ chọn tất cả</button>
+                <span class="ms-auto text-muted" id="demHien"></span>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div id="dsCau" class="list-group list-group-flush" style="max-height: 560px; overflow-y: auto"></div>
+        </div>
+    </div>
+
+    <div id="hiddenCau"></div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/cauhoidethi-form.js" asp-append-version="true"></script>
+}

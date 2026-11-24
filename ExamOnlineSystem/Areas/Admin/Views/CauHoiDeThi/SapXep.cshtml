@@ -1,0 +1,80 @@
+@using ExamOnlineSystem.Utility
+@{
+    var de = (DeThi)ViewData["DeThi"]!;
+    var cauHois = ViewData["CauHois"] as List<(int DongId, int ThuTu, int CauHoiId, double Diem, string NoiDung, int Loai, int MucDo, bool CoHinhAnh)> ?? new();
+    ViewData["Title"] = "Sắp xếp câu hỏi – đề " + de.MaDeThi;
+    var mauMucDo = new Dictionary<int, string> { [1] = "success", [2] = "info", [3] = "warning", [4] = "danger" };
+}
+
+<form asp-action="SapXep" method="post" id="frmSapXep">
+    <input type="hidden" name="deThiId" value="@de.Id" />
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <h3 class="text-black-50 mb-0"><i class="bi bi-sort-numeric-down"></i> Sắp xếp câu hỏi – đề @de.MaDeThi</h3>
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary" id="btnLuu"><i class="bi bi-check-circle"></i> Lưu thứ tự</button>
+            <a asp-controller="DeThi" asp-action="Details" asp-route-id="@de.Id" class="btn btn-secondary"><i class="bi bi-x-circle"></i> Hủy</a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-white">
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <span class="me-auto text-muted small">
+                    @de.TenDeThi · @cauHois.Count câu ·
+                    <span id="soCauDoi">Chưa thay đổi</span>
+                </span>
+                <span class="small text-muted">Sắp nhanh:</span>
+                <div class="btn-group btn-group-sm flex-wrap">
+                    <button type="button" class="btn btn-outline-secondary" data-sap="de-kho" title="Dễ → Rất khó"><i class="bi bi-sort-up"></i> Dễ → khó</button>
+                    <button type="button" class="btn btn-outline-secondary" data-sap="kho-de" title="Rất khó → Dễ"><i class="bi bi-sort-down"></i> Khó → dễ</button>
+                    @if (cauHois.Select(c => c.Loai).Distinct().Count() > 1)
+                    {
+                        <button type="button" class="btn btn-outline-secondary" data-sap="tn-truoc"><i class="bi bi-ui-checks"></i> Trắc nghiệm trước</button>
+                    }
+                    <button type="button" class="btn btn-outline-secondary" data-sap="ngau-nhien"><i class="bi bi-shuffle"></i> Xáo ngẫu nhiên</button>
+                    <button type="button" class="btn btn-outline-secondary" data-sap="ban-dau"><i class="bi bi-arrow-counterclockwise"></i> Ban đầu</button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            @if (cauHois.Count == 0)
+            {
+                <p class="text-muted mb-0"><i class="bi bi-info-circle"></i> Đề chưa có câu hỏi nào.</p>
+            }
+            else
+            {
+                <p class="small text-muted mb-2"><i class="bi bi-arrows-move"></i> Kéo thả từng câu (giữ biểu tượng <i class="bi bi-grip-vertical"></i>) hoặc dùng nút ↑ ↓ để đổi vị trí.</p>
+                <ul id="dsSapXep" class="list-group">
+                    @foreach (var c in cauHois)
+                    {
+                        <li class="list-group-item d-flex align-items-center gap-2 cau-sap" draggable="true"
+                            data-id="@c.DongId" data-goc="@c.ThuTu" data-muc-do="@c.MucDo" data-loai="@c.Loai">
+                            <i class="bi bi-grip-vertical text-muted fs-5 tay-keo" style="cursor: grab" title="Kéo để đổi vị trí"></i>
+                            <span class="fw-semibold text-nowrap so-cau" style="min-width: 58px">Câu @c.ThuTu</span>
+                            <div class="me-auto">
+                                <div><span class="text-muted">#@c.CauHoiId</span> @(c.NoiDung.Length > 110 ? c.NoiDung[..110] + "…" : c.NoiDung)</div>
+                                <div class="small mt-1">
+                                    <span class="badge text-bg-light border">@CauHoiLabel.TenLoaiCauHoi(c.Loai)</span>
+                                    <span class="badge text-bg-@(mauMucDo.GetValueOrDefault(c.MucDo, "secondary"))">@CauHoiLabel.TenMucDo(c.MucDo)</span>
+                                    <span class="text-muted">@c.Diem điểm</span>
+                                    @if (c.CoHinhAnh) { <i class="bi bi-image text-primary" title="Có ảnh"></i> }
+                                    <span class="badge text-bg-warning doi-cho d-none" title="Vị trí ban đầu">trước: câu @c.ThuTu</span>
+                                </div>
+                            </div>
+                            <div class="btn-group btn-group-sm">
+                                <button type="button" class="btn btn-outline-secondary btn-len" title="Lên"><i class="bi bi-arrow-up"></i></button>
+                                <button type="button" class="btn btn-outline-secondary btn-xuong" title="Xuống"><i class="bi bi-arrow-down"></i></button>
+                            </div>
+                            <input type="hidden" name="thuTu" value="@c.DongId" />
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <script src="~/js/cauhoidethi-sapxep.js" asp-append-version="true"></script>
+}

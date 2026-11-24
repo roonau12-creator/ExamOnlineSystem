@@ -1,0 +1,37 @@
+@{
+    ViewData["Title"] = "Danh sách lớp";
+}
+<div class="text-center text-black-50">
+    <h3>Danh sách lớp</h3>
+</div>
+@* Bộ lọc: lọc trực tiếp trên bảng theo khoa (lop.js) *@
+<div class="row g-2 align-items-center mb-3">
+    <div class="col-sm-6 col-md-4">
+        <select id="locKhoa" class="form-select" asp-items='ViewData["KhoaList"] as SelectList'>
+            <option value="">-- Tất cả khoa --</option>
+        </select>
+    </div>
+    <div class="col-sm-6 col-md-auto ms-auto text-end">
+        <a asp-action="Create" class="btn btn-outline-danger"><i class="bi bi-plus-circle"></i> Thêm lớp</a>
+    </div>
+</div>
+<table id="tblLop" class="table table-bordered table-hover w-100">
+    <thead>
+        <tr>
+            <th class="bg-primary text-white-50">STT</th>
+            <th class="bg-primary text-white-50">Mã lớp</th>
+            <th class="bg-primary text-white-50">Tên lớp</th>
+            <th class="bg-primary text-white-50">Khoa</th>
+            <th class="bg-primary text-white-50">Số sinh viên</th>
+            <th class="bg-primary text-white-50">Chức năng</th>
+        </tr>
+    </thead>
+</table>
+
+<form id="deleteForm" method="post">
+    @Html.AntiForgeryToken()
+</form>
+
+@section Scripts {
+    <script src="~/js/lop.js" asp-append-version="true"></script>
+}

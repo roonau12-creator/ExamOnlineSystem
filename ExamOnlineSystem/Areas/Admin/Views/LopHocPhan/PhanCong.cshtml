@@ -1,0 +1,340 @@
+@using ExamOnlineSystem.Utility
+@model ExamOnlineSystem.Models.ViewModels.PhanCongLopHocPhanVM
+@{
+    var lhp = Model.LopHocPhan;
+    ViewData["Title"] = "Phân công lớp học phần " + lhp.MaLopHocPhan;
+    var tabGiaoVien = Model.Tab != "sinhvien";
+    var phuTrach = Model.GiaoVienTrongLop.FirstOrDefault(g => g.VaiTro == LopHocPhanVaiTro.PhuTrach);
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h3 class="text-black-50 mb-0"><i class="bi bi-person-check"></i> Phân công giảng viên, sinh viên</h3>
+    <div class="d-flex flex-wrap gap-2">
+        <a asp-action="Details" asp-route-id="@lhp.Id" class="btn btn-outline-info"><i class="bi bi-eye"></i> Chi tiết</a>
+        <a asp-action="Edit" asp-route-id="@lhp.Id" class="btn btn-outline-primary"><i class="bi bi-pencil-square"></i> Sửa lớp HP</a>
+        <a asp-action="Index" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Quay lại danh sách</a>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body py-3">
+        <div class="row g-3 align-items-center">
+            <div class="col-md">
+                <h5 class="mb-1">@lhp.MaLopHocPhan – @lhp.TenLopHocPhan</h5>
+                <div class="text-muted small">
+                    <i class="bi bi-journal-bookmark"></i> @(lhp.HocPhan?.MaHocPhan) – @(lhp.HocPhan?.TenHocPhan)
+                    · @(lhp.NamHoc?.TenNamHoc) · @LopHocPhanLabel.TenHocKy(lhp.HocKy)
+                    · Khoa: @(lhp.HocPhan?.Khoa?.TenKhoa ?? "—")
+                </div>
+            </div>
+            <div class="col-md-auto d-flex flex-wrap gap-2">
+                <span class="badge bg-secondary fs-6">Giảng viên: @Model.GiaoVienTrongLop.Count</span>
+                <span class="badge bg-primary fs-6">Sĩ số: @Model.SinhVienTrongLop.Count / @lhp.SiSoToiDa</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Model.CanhBao.Count > 0)
+{
+    <div class="alert alert-warning">
+        <strong><i class="bi bi-exclamation-triangle"></i> Lưu ý:</strong>
+        <ul class="mb-0">
+            @foreach (var cb in Model.CanhBao)
+            {
+                <li>@cb</li>
+            }
+        </ul>
+    </div>
+}
+
+@if (phuTrach == null)
+{
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> Lớp học phần chưa có <strong>giảng viên phụ trách</strong>.
+        Hãy chọn giảng viên ở cột bên trái và phân công với vai trò "Phụ trách".
+    </div>
+}
+
+<ul class="nav nav-tabs mb-3" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link @(tabGiaoVien ? "active" : "")" data-bs-toggle="tab" data-bs-target="#tabGiaoVien" type="button" role="tab">
+            <i class="bi bi-person-workspace"></i> Giảng viên (@Model.GiaoVienTrongLop.Count)
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link @(tabGiaoVien ? "" : "active")" data-bs-toggle="tab" data-bs-target="#tabSinhVien" type="button" role="tab">
+            <i class="bi bi-person-vcard"></i> Sinh viên (@Model.SinhVienTrongLop.Count)
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content">
+    @* ======================= TAB GIẢNG VIÊN ======================= *@
+    <div class="tab-pane fade @(tabGiaoVien ? "show active" : "")" id="tabGiaoVien" role="tabpanel">
+        <div class="row g-3">
+            @* ----- Cột trái: giảng viên chưa phân công ----- *@
+            <div class="col-xl-6">
+                <form asp-action="PhanCongGiaoVien" method="post" id="frmThemGV">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="lopHocPhanId" value="@lhp.Id" />
+
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-white">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                <h5 class="mb-0">Giảng viên chưa phân công</h5>
+                                <button type="submit" class="btn btn-sm btn-danger btn-luu" disabled>
+                                    <i class="bi bi-box-arrow-in-right"></i> Phân công <span class="so-chon">0</span> giảng viên
+                                </button>
+                            </div>
+                            <div class="row g-2 mt-2">
+                                <div class="col-md-5">
+                                    <input id="timGV" class="form-control form-control-sm" placeholder="Tìm mã GV, họ tên, email..." />
+                                </div>
+                                <div class="col-md-4">
+                                    <select id="locKhoaGV" class="form-select form-select-sm">
+                                        <option value="">Tất cả khoa</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <select id="locBoMonGV" class="form-select form-select-sm">
+                                        <option value="">Tất cả bộ môn</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row g-2 mt-2 align-items-center">
+                                <div class="col-md-5">
+                                    <select name="vaiTro" id="vaiTroGV" class="form-select form-select-sm">
+                                        <option value="@LopHocPhanVaiTro.PhuTrach">Vai trò: Phụ trách</option>
+                                        <option value="@LopHocPhanVaiTro.TroGiang" selected="@(phuTrach != null)">Vai trò: Trợ giảng</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-7 d-flex flex-wrap gap-2 small">
+                                    <button type="button" id="chonTatCaGV" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-check2-all"></i> Chọn tất cả đang hiện
+                                    </button>
+                                    <button type="button" id="boChonGV" class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-x-lg"></i> Bỏ chọn
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="small text-muted mt-2" id="demGV"></div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div id="dsGV" class="list-group list-group-flush" style="max-height: 460px; overflow-y: auto">
+                                <div class="list-group-item text-muted">Đang tải danh sách giảng viên...</div>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-white small text-muted">
+                            <i class="bi bi-info-circle"></i> Mỗi lớp học phần chỉ có <strong>1 giảng viên phụ trách</strong>,
+                            những người còn lại là trợ giảng.
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            @* ----- Cột phải: giảng viên đã phân công ----- *@
+            <div class="col-xl-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                            <h5 class="mb-0">Đã phân công</h5>
+                            <button type="submit" form="frmBoGV" class="btn btn-sm btn-outline-danger btn-luu" disabled>
+                                <i class="bi bi-person-dash"></i> Bỏ <span class="so-chon">0</span> giảng viên
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <form asp-action="BoGiaoVien" method="post" id="frmBoGV">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="lopHocPhanId" value="@lhp.Id" />
+
+                            <div id="dsGVTrongLop" class="list-group list-group-flush" style="max-height: 520px; overflow-y: auto">
+                                @if (Model.GiaoVienTrongLop.Count == 0)
+                                {
+                                    <div class="list-group-item text-muted">
+                                        <i class="bi bi-info-circle"></i> Chưa phân công giảng viên nào.
+                                    </div>
+                                }
+                                else
+                                {
+                                    @foreach (var gv in Model.GiaoVienTrongLop)
+                                    {
+                                        <div class="list-group-item d-flex gap-2 align-items-start">
+                                            <input type="checkbox" name="giaoVienIds" value="@gv.Id"
+                                                   class="form-check-input mt-1 flex-shrink-0" />
+                                            <div class="flex-grow-1">
+                                                <span class="fw-semibold">@gv.MaGiaoVien</span> – @gv.HoTen
+                                                <span class="badge @(gv.VaiTro == LopHocPhanVaiTro.PhuTrach ? "bg-success" : "bg-secondary") ms-1">
+                                                    @LopHocPhanLabel.TenVaiTro(gv.VaiTro)
+                                                </span>
+                                                <br />
+                                                <small class="text-muted">
+                                                    <i class="bi bi-diagram-3"></i> @gv.TenBoMon · @gv.TenKhoa
+                                                    · @gv.Email
+                                                    · đang dạy @gv.SoLopHocPhan lớp HP
+                                                </small>
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        </form>
+
+                        @* Đổi vai trò: mỗi giảng viên một form POST riêng để không lồng form *@
+                        @if (Model.GiaoVienTrongLop.Count > 0)
+                        {
+                            <div class="border-top p-2 d-flex flex-wrap gap-2">
+                                @foreach (var gv in Model.GiaoVienTrongLop)
+                                {
+                                    var sangPhuTrach = gv.VaiTro != LopHocPhanVaiTro.PhuTrach;
+                                    <form asp-action="DoiVaiTroGiaoVien" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="lopHocPhanId" value="@lhp.Id" />
+                                        <input type="hidden" name="giaoVienId" value="@gv.Id" />
+                                        <input type="hidden" name="vaiTro"
+                                               value="@(sangPhuTrach ? LopHocPhanVaiTro.PhuTrach : LopHocPhanVaiTro.TroGiang)" />
+                                        <button type="submit" class="btn btn-sm @(sangPhuTrach ? "btn-outline-success" : "btn-outline-secondary")">
+                                            <i class="bi bi-arrow-repeat"></i>
+                                            @gv.HoTen → @(sangPhuTrach ? "Phụ trách" : "Trợ giảng")
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+                        }
+                    </div>
+                    <div class="card-footer bg-white small text-muted">
+                        <i class="bi bi-info-circle"></i> Đặt một giảng viên làm phụ trách thì người phụ trách cũ
+                        tự chuyển thành trợ giảng.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* ======================= TAB SINH VIÊN ======================= *@
+    <div class="tab-pane fade @(tabGiaoVien ? "" : "show active")" id="tabSinhVien" role="tabpanel">
+        <div class="row g-3">
+            @* ----- Cột trái: sinh viên chưa có trong lớp học phần ----- *@
+            <div class="col-xl-6">
+                <form asp-action="ThemSinhVien" method="post" id="frmThemSV"
+                      data-con-lai="@(lhp.SiSoToiDa - Model.SinhVienTrongLop.Count)">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="lopHocPhanId" value="@lhp.Id" />
+
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-white">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                <h5 class="mb-0">Sinh viên chưa có trong lớp</h5>
+                                <button type="submit" class="btn btn-sm btn-danger btn-luu" disabled>
+                                    <i class="bi bi-box-arrow-in-right"></i> Thêm <span class="so-chon">0</span> sinh viên
+                                </button>
+                            </div>
+                            <div class="row g-2 mt-2">
+                                <div class="col-md-5">
+                                    <input id="timSV" class="form-control form-control-sm" placeholder="Tìm mã SV, họ tên, email..." />
+                                </div>
+                                <div class="col-md-4">
+                                    <select id="locKhoaSV" class="form-select form-select-sm">
+                                        <option value="">Tất cả khoa</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <select id="locLopSV" class="form-select form-select-sm">
+                                        <option value="">Tất cả lớp</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="d-flex flex-wrap align-items-center gap-2 mt-2 small">
+                                <button type="button" id="chonTatCaSV" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-check2-all"></i> Chọn tất cả đang hiện
+                                </button>
+                                <button type="button" id="boChonSV" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-x-lg"></i> Bỏ chọn
+                                </button>
+                                <span class="ms-auto text-muted" id="demSV"></span>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div id="dsSV" class="list-group list-group-flush" style="max-height: 520px; overflow-y: auto">
+                                <div class="list-group-item text-muted">Đang tải danh sách sinh viên...</div>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-white small text-muted">
+                            <i class="bi bi-info-circle"></i> Còn <strong>@(lhp.SiSoToiDa - Model.SinhVienTrongLop.Count)</strong>
+                            suất trong lớp học phần (sĩ số tối đa @lhp.SiSoToiDa).
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            @* ----- Cột phải: sinh viên của lớp học phần ----- *@
+            <div class="col-xl-6">
+                <form asp-action="BoSinhVien" method="post" id="frmBoSV">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="lopHocPhanId" value="@lhp.Id" />
+
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-white">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                <h5 class="mb-0">Sinh viên trong lớp học phần</h5>
+                                <button type="submit" class="btn btn-sm btn-outline-danger btn-luu" disabled>
+                                    <i class="bi bi-person-dash"></i> Bỏ <span class="so-chon">0</span> sinh viên
+                                </button>
+                            </div>
+                            <div class="row g-2 mt-2">
+                                <div class="col-md-12">
+                                    <input id="timSVTrongLop" class="form-control form-control-sm" placeholder="Tìm mã SV, họ tên, email..." />
+                                </div>
+                            </div>
+                            <div class="d-flex flex-wrap align-items-center gap-2 mt-2 small">
+                                <button type="button" id="chonTatCaSVTrongLop" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-check2-all"></i> Chọn tất cả đang hiện
+                                </button>
+                                <button type="button" id="boChonSVTrongLop" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-x-lg"></i> Bỏ chọn
+                                </button>
+                                <span class="ms-auto text-muted" id="demSVTrongLop"></span>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div id="dsSVTrongLop" class="list-group list-group-flush" style="max-height: 520px; overflow-y: auto">
+                                @if (Model.SinhVienTrongLop.Count == 0)
+                                {
+                                    <div class="list-group-item text-muted">
+                                        <i class="bi bi-info-circle"></i> Lớp học phần chưa có sinh viên nào.
+                                    </div>
+                                }
+                                else
+                                {
+                                    @foreach (var sv in Model.SinhVienTrongLop)
+                                    {
+                                        <label class="list-group-item d-flex gap-2 align-items-start dong-sv"
+                                               data-tim="@($"{sv.MaSinhVien} {sv.HoTen} {sv.Email}".ToLower())">
+                                            <input type="checkbox" name="sinhVienIds" value="@sv.Id" class="form-check-input mt-1 flex-shrink-0" />
+                                            <span class="flex-grow-1">
+                                                <span class="fw-semibold">@sv.MaSinhVien</span> – @sv.HoTen
+                                                <span class="badge bg-light text-dark border ms-1">@(sv.GioiTinh ? "Nam" : "Nữ")</span>
+                                                <br />
+                                                <small class="text-muted">
+                                                    <i class="bi bi-people"></i> @sv.MaLop · @sv.TenKhoa · @sv.Email
+                                                </small>
+                                            </span>
+                                        </label>
+                                    }
+                                }
+                            </div>
+                        </div>
+                        <div class="card-footer bg-white small text-muted">
+                            <i class="bi bi-info-circle"></i> Bỏ sinh viên khỏi lớp học phần không xóa sinh viên khỏi hệ thống.
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/lophocphan-phancong.js" asp-append-version="true"></script>
+}

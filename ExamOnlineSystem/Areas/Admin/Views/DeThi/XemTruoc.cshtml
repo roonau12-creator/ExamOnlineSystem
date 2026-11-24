@@ -1,0 +1,177 @@
+@using ExamOnlineSystem.Models.ViewModels
+@using ExamOnlineSystem.Utility
+@model DeThiChiTietVM
+@{
+    var de = Model.DeThi;
+    ViewData["Title"] = "Xem trước đề " + de.MaDeThi;
+    var duDieuKien = Model.VanDePhatHanh.Count == 0;
+    var coTracNghiem = Model.CauHois.Any(c => c.LoaiCauHoi == 1);
+    var coTuLuan = Model.CauHois.Any(c => c.LoaiCauHoi == 2);
+}
+
+@* ===== Thanh công cụ (không in) ===== *@
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3 khong-in">
+    <h3 class="text-black-50 mb-0"><i class="bi bi-eye"></i> Xem trước đề thi</h3>
+    <div class="d-flex flex-wrap gap-2">
+        @if (Model.CoQuyenSua && !de.DaPhatHanh && duDieuKien)
+        {
+            <form asp-action="PhatHanh" asp-route-id="@de.Id" method="post" id="frmPhatHanh" class="d-inline">
+                <button type="submit" class="btn btn-success"><i class="bi bi-send-check"></i> Phát hành</button>
+            </form>
+        }
+        <button type="button" class="btn btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer"></i> In đề</button>
+        <a asp-action="Details" asp-route-id="@de.Id" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Chi tiết đề</a>
+    </div>
+</div>
+
+@* ===== Kiểm tra trước khi phát hành (không in) ===== *@
+<div class="card shadow-sm mb-4 khong-in">
+    <div class="card-header bg-white d-flex flex-wrap align-items-center gap-2">
+        <h5 class="mb-0 me-auto"><i class="bi bi-clipboard-check"></i> Kiểm tra trước khi phát hành</h5>
+        @if (de.DaPhatHanh)
+        {
+            <span class="badge text-bg-success">Đã phát hành</span>
+        }
+        else if (duDieuKien)
+        {
+            <span class="badge text-bg-success">Đủ điều kiện phát hành</span>
+        }
+        else
+        {
+            <span class="badge text-bg-danger">Chưa phát hành được (@Model.VanDePhatHanh.Count lỗi)</span>
+        }
+    </div>
+    <div class="card-body">
+        <ul class="list-unstyled mb-0" id="dsKiemTra">
+            @foreach (var v in Model.VanDePhatHanh)
+            {
+                <li class="text-danger mb-1"><i class="bi bi-x-circle-fill"></i> @v</li>
+            }
+            @if (duDieuKien)
+            {
+                <li class="text-success mb-1"><i class="bi bi-check-circle-fill"></i> Đề có @Model.CauHois.Count câu hỏi, tổng điểm các câu khớp tổng điểm đề (@Model.TongDiemCau/@de.TongDiem)</li>
+                <li class="text-success mb-1"><i class="bi bi-check-circle-fill"></i> Mọi câu đúng môn học và phù hợp loại đề (@DeThiLabel.TenLoaiDeThi(de.LoaiDeThi))</li>
+                @if (coTracNghiem)
+                {
+                    <li class="text-success mb-1"><i class="bi bi-check-circle-fill"></i> Mọi câu trắc nghiệm có đủ đáp án và có đáp án đúng</li>
+                }
+            }
+            @foreach (var l in Model.LuuY)
+            {
+                <li class="text-warning-emphasis mb-1"><i class="bi bi-exclamation-triangle-fill text-warning"></i> @l</li>
+            }
+            @if (duDieuKien && Model.LuuY.Count == 0)
+            {
+                <li class="text-success mb-1"><i class="bi bi-check-circle-fill"></i> Không có lưu ý nào</li>
+            }
+        </ul>
+        @if (!duDieuKien && Model.CoQuyenSua && !de.DaPhatHanh)
+        {
+            <div class="small mt-2">
+                Sửa đề:
+                <a asp-action="Edit" asp-route-id="@de.Id">Sửa đề</a> ·
+                <a asp-controller="CauHoiDeThi" asp-action="PhanBoDiem" asp-route-deThiId="@de.Id">Phân bổ điểm</a> ·
+                <a asp-controller="CauHoiDeThi" asp-action="Create" asp-route-deThiId="@de.Id">Thêm câu hỏi</a>
+            </div>
+        }
+    </div>
+</div>
+
+@* ===== Chế độ xem (không in) ===== *@
+@if (Model.CauHois.Count > 0)
+{
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3 khong-in">
+        <div class="btn-group" role="group" aria-label="Chế độ xem">
+            <input type="radio" class="btn-check" name="cheDo" id="cheDoLamThu" value="lam-thu" checked />
+            <label class="btn btn-outline-primary" for="cheDoLamThu"><i class="bi bi-pencil"></i> Làm thử</label>
+            <input type="radio" class="btn-check" name="cheDo" id="cheDoDapAn" value="dap-an" />
+            <label class="btn btn-outline-primary" for="cheDoDapAn"><i class="bi bi-key"></i> Hiện đáp án</label>
+        </div>
+        <button type="button" id="btnNopThu" class="btn btn-primary"><i class="bi bi-send"></i> Nộp thử</button>
+        <button type="button" id="btnLamLai" class="btn btn-outline-secondary d-none"><i class="bi bi-arrow-counterclockwise"></i> Làm lại</button>
+        <span id="ketQua" class="ms-2 fw-semibold"></span>
+    </div>
+}
+
+@* ===== Đề thi (như sinh viên thấy) ===== *@
+<div class="card shadow-sm" id="deThi">
+    <div class="card-body p-4">
+        <div class="text-center mb-4 border-bottom pb-3">
+            <div class="text-uppercase small text-muted">@Model.TenMonHoc</div>
+            <h4 class="mb-1">@de.TenDeThi</h4>
+            <div class="small">
+                Mã đề: <strong>@de.MaDeThi</strong> ·
+                Thời gian làm bài: <strong>@de.ThoiLuong phút</strong> ·
+                Tổng điểm: <strong>@de.TongDiem</strong> ·
+                Số câu: <strong>@Model.CauHois.Count</strong>
+                @if (coTracNghiem && coTuLuan)
+                {
+                    <span>(@Model.CauHois.Count(c => c.LoaiCauHoi == 1) trắc nghiệm, @Model.CauHois.Count(c => c.LoaiCauHoi == 2) tự luận)</span>
+                }
+            </div>
+        </div>
+
+        @if (Model.CauHois.Count == 0)
+        {
+            <p class="text-muted text-center mb-0"><i class="bi bi-info-circle"></i> Đề chưa có câu hỏi nào.</p>
+        }
+
+        @foreach (var c in Model.CauHois)
+        {
+            var nhieuDung = c.DapAns.Count(d => d.DapAnDung) > 1;
+            <div class="cau mb-4" data-diem="@c.Diem.ToString(System.Globalization.CultureInfo.InvariantCulture)" data-loai="@c.LoaiCauHoi">
+                <div class="d-flex align-items-baseline gap-2 mb-1">
+                    <strong class="text-nowrap">Câu @c.ThuTu</strong>
+                    <span class="text-muted small text-nowrap">(@c.Diem điểm@(nhieuDung ? " · chọn nhiều đáp án" : ""))</span>
+                    <span class="ket-qua-cau ms-auto small fw-semibold"></span>
+                </div>
+                <div style="white-space: pre-line">@c.NoiDung</div>
+                @if (c.CoHinhAnh)
+                {
+                    <img src="@Url.Action("HinhAnh", "CauHoi", new { id = c.CauHoiId })" alt="Hình câu @c.ThuTu"
+                         class="img-fluid img-thumbnail mt-2" style="max-height: 320px" />
+                }
+
+                @if (c.LoaiCauHoi == 1)
+                {
+                    <div class="mt-2">
+                        @for (var i = 0; i < c.DapAns.Count; i++)
+                        {
+                            var d = c.DapAns[i];
+                            var idInput = $"c{c.ThuTu}_{i}";
+                            <div class="form-check lua-chon py-1 px-4 rounded" data-dung="@(d.DapAnDung ? "1" : "0")">
+                                <input class="form-check-input" type="@(nhieuDung ? "checkbox" : "radio")" name="cau@(c.ThuTu)" id="@idInput" />
+                                <label class="form-check-label" for="@idInput">
+                                    <strong>@ThuTuDapAnHelper.Nhan(i).</strong> @d.NoiDung
+                                    <i class="bi bi-check-circle-fill text-success dau-dung d-none"></i>
+                                </label>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <textarea class="form-control mt-2" rows="4" placeholder="Sinh viên nhập bài làm tự luận..."></textarea>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(c.GiaiThich))
+                {
+                    <div class="giai-thich alert alert-info py-2 small mt-2 mb-0 d-none" style="white-space: pre-line"><strong>@(c.LoaiCauHoi == 1 ? "Giải thích" : "Gợi ý chấm"):</strong> @c.GiaiThich</div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@* Bản in: chỉ in nội dung đề, ẩn thanh công cụ, menu, kết quả làm thử, đáp án đúng, giải thích *@
+<style>
+    @@media print {
+        .khong-in, .admin-sidebar, nav, header, footer, .ket-qua-cau, .giai-thich, .dau-dung { display: none !important; }
+        #deThi { box-shadow: none !important; border: 0 !important; }
+        .lua-chon { background: none !important; }
+    }
+</style>
+
+@section Scripts {
+    <script src="~/js/dethi-xemtruoc.js" asp-append-version="true"></script>
+}

@@ -1,0 +1,45 @@
+@{
+    ViewData["Title"] = "Danh sách lớp học phần";
+}
+<div class="text-center text-black-50">
+    <h3>Quản lý lớp học phần</h3>
+</div>
+@* Bộ lọc: lọc trực tiếp trên bảng theo năm học / học kỳ (lophocphan.js) *@
+<div class="row g-2 align-items-center mb-3">
+    <div class="col-sm-6 col-md-3">
+        <select id="locNamHoc" class="form-select" asp-items='ViewData["NamHocList"] as List<SelectListItem>'>
+            <option value="0">-- Tất cả năm học --</option>
+        </select>
+    </div>
+    <div class="col-sm-6 col-md-3">
+        <select id="locHocKy" class="form-select" asp-items='ViewData["HocKyList"] as List<SelectListItem>'>
+            <option value="">-- Tất cả học kỳ --</option>
+        </select>
+    </div>
+    <div class="col-md-auto ms-auto text-end">
+        <a asp-action="Create" class="btn btn-outline-danger"><i class="bi bi-plus-circle"></i> Thêm lớp học phần</a>
+    </div>
+</div>
+<table id="tblLopHocPhan" class="table table-bordered table-hover w-100">
+    <thead>
+        <tr>
+            <th class="bg-primary text-white-50">STT</th>
+            <th class="bg-primary text-white-50">Mã lớp HP</th>
+            <th class="bg-primary text-white-50">Tên lớp học phần</th>
+            <th class="bg-primary text-white-50">Học phần</th>
+            <th class="bg-primary text-white-50">Năm học</th>
+            <th class="bg-primary text-white-50">Học kỳ</th>
+            <th class="bg-primary text-white-50">Giảng viên</th>
+            <th class="bg-primary text-white-50">Sĩ số</th>
+            <th class="bg-primary text-white-50">Chức năng</th>
+        </tr>
+    </thead>
+</table>
+
+<form id="deleteForm" method="post">
+    @Html.AntiForgeryToken()
+</form>
+
+@section Scripts {
+    <script src="~/js/lophocphan.js" asp-append-version="true"></script>
+}

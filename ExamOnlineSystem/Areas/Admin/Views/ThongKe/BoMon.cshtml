@@ -1,0 +1,347 @@
+@using ExamOnlineSystem.Models.ViewModels
+@model ExamOnlineSystem.Models.ViewModels.ThongKeBoMonTongQuanVM
+@{
+    ViewData["Title"] = "Thống kê bộ môn";
+
+    var theoKhoa = Model.BoMons
+        .GroupBy(b => new { b.KhoaId, b.TenKhoa })
+        .Select(g => new
+        {
+            g.Key.KhoaId,
+            g.Key.TenKhoa,
+            SoBoMon = g.Count(),
+            SoGiaoVien = g.Sum(x => x.SoGiaoVien),
+            SoMonHoc = g.Sum(x => x.SoMonHoc),
+            SoCauHoi = g.Sum(x => x.SoCauHoi),
+            SoDeThi = g.Sum(x => x.SoDeThi),
+            SoLichThi = g.Sum(x => x.SoLichThi)
+        })
+        .OrderByDescending(x => x.SoCauHoi).ThenBy(x => x.TenKhoa)
+        .ToList();
+
+    var topCauHoi = Model.BoMons.Where(b => b.SoCauHoi > 0).OrderByDescending(b => b.SoCauHoi).Take(5).ToList();
+    var maxCauHoi = topCauHoi.Count == 0 ? 1 : topCauHoi.Max(b => b.SoCauHoi);
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h3 class="text-black-50 mb-0"><i class="bi bi-diagram-3"></i> Thống kê bộ môn</h3>
+    <div class="d-flex flex-wrap gap-2">
+        <a asp-action="XuatExcelBoMon" class="btn btn-outline-success">
+            <i class="bi bi-file-earmark-excel"></i> Xuất Excel
+        </a>
+        <a asp-action="Khoa" class="btn btn-outline-secondary"><i class="bi bi-building"></i> Khoa</a>
+        <a asp-action="GiaoVien" class="btn btn-outline-secondary"><i class="bi bi-graph-up-arrow"></i> Giảng viên</a>
+        <a asp-controller="BoMon" asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-list-ul"></i> Danh sách bộ môn
+        </a>
+    </div>
+</div>
+
+@if (Model.TongBoMon == 0)
+{
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> Chưa có bộ môn nào trong hệ thống.
+        <a asp-controller="BoMon" asp-action="Create">Thêm bộ môn</a> để bắt đầu.
+    </div>
+    return;
+}
+
+<div class="alert alert-light border small py-2">
+    <i class="bi bi-info-circle"></i>
+    Môn học, học phần, câu hỏi và đề thi được quy về bộ môn <strong>theo môn học</strong> (không theo người soạn);
+    lịch thi và kết quả thi tính theo <strong>giảng viên của bộ môn phụ trách</strong>. Điểm đã quy về thang 10.
+</div>
+
+@* Thống kê nhanh *@
+<div class="row g-3 mb-3">
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-primary h-100"><div class="card-body py-2">
+            <div class="text-muted small">Bộ môn</div>
+            <div class="fs-4 fw-bold text-primary">@Model.TongBoMon</div>
+            <div class="small text-muted">thuộc @Model.SoKhoa khoa</div>
+        </div></div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-success h-100"><div class="card-body py-2">
+            <div class="text-muted small">Giảng viên</div>
+            <div class="fs-4 fw-bold text-success">@Model.TongGiaoVien</div>
+            <div class="small text-muted">
+                @if (Model.SoBoMonChuaCoGiaoVien > 0)
+                {
+                    <span class="text-danger">@Model.SoBoMonChuaCoGiaoVien bộ môn chưa có giảng viên</span>
+                }
+                else
+                {
+                    <text>Mọi bộ môn đều có giảng viên</text>
+                }
+            </div>
+        </div></div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-info h-100"><div class="card-body py-2">
+            <div class="text-muted small">Ngân hàng đề</div>
+            <div class="fs-4 fw-bold text-info">@Model.TongCauHoi<span class="fs-6 text-muted"> câu hỏi</span></div>
+            <div class="small text-muted">
+                @Model.TongDeThi đề thi (@Model.TongDeThiDaPhatHanh đã phát hành) · @Model.TongMonHoc môn học
+            </div>
+        </div></div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-warning h-100"><div class="card-body py-2">
+            <div class="text-muted small">Kết quả thi</div>
+            <div class="fs-4 fw-bold text-warning">@(Model.DiemTrungBinhHe10?.ToString("0.##") ?? "—")</div>
+            <div class="small text-muted">
+                @Model.TongLichThi lịch thi · @Model.TongBaiDaNop/@Model.TongLuotDuThi bài đã nộp
+                @if (Model.TongBaiCoDiem > 0)
+                {
+                    <text>· @Model.TiLeDat% đạt</text>
+                }
+            </div>
+        </div></div>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    @* Top bộ môn theo ngân hàng câu hỏi *@
+    <div class="col-lg-5">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-question-circle"></i> Ngân hàng câu hỏi lớn nhất</h5>
+            </div>
+            <div class="card-body">
+                @if (topCauHoi.Count == 0)
+                {
+                    <p class="text-muted mb-0"><i class="bi bi-info-circle"></i> Chưa có bộ môn nào có câu hỏi.</p>
+                }
+                else
+                {
+                    foreach (var b in topCauHoi)
+                    {
+                        var tiLe = (int)Math.Round(b.SoCauHoi * 100.0 / maxCauHoi);
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between small">
+                                <a asp-action="BoMonChiTiet" asp-route-id="@b.Id" class="text-decoration-none">@b.TenBoMon</a>
+                                <span class="fw-semibold">@b.SoCauHoi</span>
+                            </div>
+                            <div class="progress" role="progressbar" aria-valuenow="@tiLe" aria-valuemin="0" aria-valuemax="100" style="height:.6rem">
+                                <div class="progress-bar bg-info" style="width:@tiLe%"></div>
+                            </div>
+                            <div class="small text-muted">
+                                @b.TenKhoa · @b.SoDeThi đề thi · TB @b.CauHoiMoiMonHoc câu/môn học
+                            </div>
+                        </div>
+                    }
+                    if (Model.SoBoMonChuaCoNganHangDe > 0)
+                    {
+                        <hr />
+                        <div class="small text-muted">
+                            <i class="bi bi-exclamation-circle"></i>
+                            @Model.SoBoMonChuaCoNganHangDe bộ môn chưa có câu hỏi hay đề thi nào.
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+
+    @* Gộp theo khoa *@
+    <div class="col-lg-7">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-building"></i> Bộ môn theo khoa (@theoKhoa.Count)</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th class="bg-primary text-white-50">Khoa</th>
+                                <th class="bg-primary text-white-50 text-center">Bộ môn</th>
+                                <th class="bg-primary text-white-50 text-center">Giảng viên</th>
+                                <th class="bg-primary text-white-50 text-center">Môn học</th>
+                                <th class="bg-primary text-white-50 text-center">Câu hỏi</th>
+                                <th class="bg-primary text-white-50 text-center">Đề thi</th>
+                                <th class="bg-primary text-white-50 text-center">Lịch thi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var k in theoKhoa)
+                            {
+                                <tr>
+                                    <td>
+                                        <a asp-action="KhoaChiTiet" asp-route-id="@k.KhoaId" class="text-decoration-none">@k.TenKhoa</a>
+                                    </td>
+                                    <td class="text-center">@k.SoBoMon</td>
+                                    <td class="text-center">@k.SoGiaoVien</td>
+                                    <td class="text-center">@k.SoMonHoc</td>
+                                    <td class="text-center">@k.SoCauHoi</td>
+                                    <td class="text-center">@k.SoDeThi</td>
+                                    <td class="text-center">@k.SoLichThi</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Bảng thống kê từng bộ môn *@
+<div class="card shadow-sm">
+    <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <h5 class="mb-0"><i class="bi bi-table"></i> Chi tiết theo bộ môn (@Model.TongBoMon)</h5>
+        <div class="d-flex flex-wrap gap-2">
+            <select id="locKhoa" class="form-select form-select-sm w-auto">
+                <option value="">-- Tất cả khoa --</option>
+                @foreach (var k in theoKhoa.Select(x => x.TenKhoa).OrderBy(x => x))
+                {
+                    <option value="@k">@k</option>
+                }
+            </select>
+            <select id="locNganHangDe" class="form-select form-select-sm w-auto">
+                <option value="">-- Tất cả bộ môn --</option>
+                <option value="co">Đã có ngân hàng đề</option>
+                <option value="chua">Chưa có ngân hàng đề</option>
+            </select>
+            <select id="locGiaoVien" class="form-select form-select-sm w-auto">
+                <option value="">-- Tất cả --</option>
+                <option value="co">Đã có giảng viên</option>
+                <option value="chua">Chưa có giảng viên</option>
+            </select>
+        </div>
+    </div>
+    <div class="card-body">
+        <table id="tblThongKeBoMon" class="table table-bordered table-hover align-middle w-100">
+            <thead>
+                <tr>
+                    <th class="bg-primary text-white-50">Mã bộ môn</th>
+                    <th class="bg-primary text-white-50">Tên bộ môn</th>
+                    <th class="bg-primary text-white-50">Khoa</th>
+                    <th class="bg-primary text-white-50 text-center">Giảng viên</th>
+                    <th class="bg-primary text-white-50 text-center">Môn học</th>
+                    <th class="bg-primary text-white-50 text-center">Học phần</th>
+                    <th class="bg-primary text-white-50 text-center">Câu hỏi</th>
+                    <th class="bg-primary text-white-50 text-center">Đề thi</th>
+                    <th class="bg-primary text-white-50 text-center">Lịch thi</th>
+                    <th class="bg-primary text-white-50">Nộp bài</th>
+                    <th class="bg-primary text-white-50 text-center">Điểm TB</th>
+                    <th class="bg-primary text-white-50 text-center">Tỉ lệ đạt</th>
+                    <th class="bg-primary text-white-50 text-center"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var b in Model.BoMons)
+                {
+                    <tr data-khoa="@b.TenKhoa"
+                        data-ngan-hang-de="@(b.ChuaCoNganHangDe ? "chua" : "co")"
+                        data-giao-vien="@(b.SoGiaoVien == 0 ? "chua" : "co")">
+                        <td class="fw-semibold">@b.MaBoMon</td>
+                        <td>
+                            <a asp-action="BoMonChiTiet" asp-route-id="@b.Id" class="text-decoration-none fw-semibold">@b.TenBoMon</a>
+                            @if (b.ChuaCoNganHangDe)
+                            {
+                                <div class="small text-muted" title="Chưa có câu hỏi hay đề thi nào">
+                                    <i class="bi bi-dash-circle"></i> Chưa có ngân hàng đề
+                                </div>
+                            }
+                        </td>
+                        <td>@b.TenKhoa</td>
+                        <td class="text-center">
+                            <span class="fw-semibold">@b.SoGiaoVien</span>
+                            @if (b.SoGiaoVienDaKhoa > 0)
+                            {
+                                <div class="small text-danger">@b.SoGiaoVienDaKhoa đã khóa</div>
+                            }
+                        </td>
+                        <td class="text-center">
+                            <span class="fw-semibold">@b.SoMonHoc</span>
+                            @if (b.SoMonHoc > b.SoMonHocHoatDong)
+                            {
+                                <div class="small text-muted">@b.SoMonHocHoatDong hoạt động</div>
+                            }
+                        </td>
+                        <td class="text-center">
+                            @b.SoHocPhan
+                            @if (b.SoLopHocPhan > 0)
+                            {
+                                <div class="small text-muted">@b.SoLopHocPhan lớp HP</div>
+                            }
+                        </td>
+                        <td class="text-center">
+                            <span class="fw-semibold">@b.SoCauHoi</span>
+                            @if (b.SoCauHoi > 0)
+                            {
+                                <div class="small text-muted">@b.SoCauHoiTracNghiem TN / @b.SoCauHoiTuLuan TL</div>
+                            }
+                        </td>
+                        <td class="text-center">
+                            <span class="fw-semibold">@b.SoDeThi</span>
+                            @if (b.SoDeThi > 0)
+                            {
+                                <div class="small text-muted">@b.SoDeThiDaPhatHanh đã phát hành</div>
+                            }
+                        </td>
+                        <td class="text-center">
+                            <span class="fw-semibold">@b.SoLichThi</span>
+                            @if (b.SoLichThiDangDienRa > 0)
+                            {
+                                <div class="small text-success">@b.SoLichThiDangDienRa đang diễn ra</div>
+                            }
+                        </td>
+                        <td data-order="@(b.SoLuotDuThi == 0 ? -1 : b.TiLeNop)">
+                            @if (b.SoLuotDuThi == 0)
+                            {
+                                <span class="text-muted small">Chưa có lượt dự thi</span>
+                            }
+                            else
+                            {
+                                <div class="progress" role="progressbar" aria-valuenow="@b.TiLeNop" aria-valuemin="0" aria-valuemax="100" style="height:1rem;min-width:100px">
+                                    <div class="progress-bar bg-success" style="width:@b.TiLeNop%">@b.TiLeNop%</div>
+                                </div>
+                                <div class="small text-muted">
+                                    @b.SoBaiDaNop/@b.SoLuotDuThi bài
+                                    @if (b.SoBaiChuaCham > 0)
+                                    {
+                                        <span class="text-danger">· @b.SoBaiChuaCham chưa chấm</span>
+                                    }
+                                </div>
+                            }
+                        </td>
+                        <td class="text-center" data-order="@(b.DiemTrungBinhHe10?.ToString("0.00") ?? "-1")">
+                            @if (b.DiemTrungBinhHe10.HasValue)
+                            {
+                                <span class="badge text-bg-@KetQuaLabel.MauXepLoai(b.XepLoai)">@b.DiemTrungBinhHe10.Value.ToString("0.##")</span>
+                                <div class="small text-muted">@b.XepLoai</div>
+                            }
+                            else
+                            {
+                                <span class="text-muted">—</span>
+                            }
+                        </td>
+                        <td class="text-center" data-order="@(b.SoBaiCoDiem == 0 ? -1 : b.TiLeDat)">
+                            @if (b.SoBaiCoDiem > 0)
+                            {
+                                <span class="fw-semibold text-@(b.TiLeDat >= 50 ? "success" : "danger")">@b.TiLeDat%</span>
+                                <div class="small text-muted">@b.SoBaiDat/@b.SoBaiCoDiem bài</div>
+                            }
+                            else
+                            {
+                                <span class="text-muted">—</span>
+                            }
+                        </td>
+                        <td class="text-center">
+                            <a asp-action="BoMonChiTiet" asp-route-id="@b.Id" class="btn btn-sm btn-outline-primary" title="Xem thống kê chi tiết">
+                                <i class="bi bi-bar-chart"></i> Chi tiết
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/thongke-bomon.js" asp-append-version="true"></script>
+}

@@ -1,0 +1,42 @@
+@model Khoa
+@{
+    ViewData["Title"] = "Xóa khoa";
+}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-sm border-danger">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0"><i class="bi bi-trash3"></i> Xóa khoa</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    Bạn có chắc chắn muốn xóa khoa này không? Thao tác này không thể hoàn tác.
+                </div>
+
+                <dl class="row">
+                    <dt class="col-sm-4">@Html.DisplayNameFor(m => m.MaKhoa)</dt>
+                    <dd class="col-sm-8">@Model.MaKhoa</dd>
+
+                    <dt class="col-sm-4">@Html.DisplayNameFor(m => m.TenKhoa)</dt>
+                    <dd class="col-sm-8">@Model.TenKhoa</dd>
+
+                    <dt class="col-sm-4">@Html.DisplayNameFor(m => m.SoThuTu)</dt>
+                    <dd class="col-sm-8">@Model.SoThuTu</dd>
+                </dl>
+
+                <form asp-action="Delete" method="post">
+                    <input type="hidden" asp-for="Id" />
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash3"></i> Xóa
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Hủy
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

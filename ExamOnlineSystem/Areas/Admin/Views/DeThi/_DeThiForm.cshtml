@@ -1,0 +1,140 @@
+@using ExamOnlineSystem.Models.ViewModels
+@model DeThiFormVM
+@* Phần thân form dùng chung cho Thêm / Sửa đề thi (dethi-form.js xử lý chọn câu hỏi) *@
+@{
+    var giaoVienHienTai = ViewData["GiaoVienHienTai"] as GiaoVien;
+    var giaoVienList = ViewData["GiaoVienList"] as SelectList;
+    var loiCauHoi = ViewData.ModelState[nameof(DeThiFormVM.CauHois)]?.Errors;
+}
+<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+@* ===== Thông tin đề ===== *@
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white"><h5 class="mb-0">Thông tin đề thi</h5></div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label asp-for="MaDeThi" class="form-label"></label>
+                <input asp-for="MaDeThi" class="form-control" placeholder="vd: CSDL-GK-02" />
+                <span asp-validation-for="MaDeThi" class="text-danger"></span>
+            </div>
+            <div class="col-md-9">
+                <label asp-for="TenDeThi" class="form-label"></label>
+                <input asp-for="TenDeThi" class="form-control" placeholder="vd: Kiểm tra giữa kỳ Cơ sở dữ liệu" />
+                <span asp-validation-for="TenDeThi" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="MonHocId" class="form-label"></label>
+                <select asp-for="MonHocId" asp-items='ViewData["MonHocList"] as SelectList' class="form-select">
+                    <option value="">-- Chọn môn học --</option>
+                </select>
+                <span asp-validation-for="MonHocId" class="text-danger"></span>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="LoaiDeThi" class="form-label"></label>
+                <select asp-for="LoaiDeThi" class="form-select">
+                    <option value="1">Trắc nghiệm</option>
+                    <option value="2">Tự luận</option>
+                    <option value="3">Kết hợp</option>
+                </select>
+                <span asp-validation-for="LoaiDeThi" class="text-danger"></span>
+            </div>
+            <div class="col-6 col-md-2">
+                <label asp-for="ThoiLuong" class="form-label"></label>
+                <input asp-for="ThoiLuong" type="number" min="1" max="600" class="form-control" />
+                <span asp-validation-for="ThoiLuong" class="text-danger"></span>
+            </div>
+            <div class="col-6 col-md-3">
+                <label asp-for="TongDiem" class="form-label"></label>
+                <input asp-for="TongDiem" type="number" step="0.25" min="0.25" class="form-control" />
+                <span asp-validation-for="TongDiem" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Giảng viên</label>
+                @if (Model.Id > 0)
+                {
+                    <input class="form-control" value="@(Model.TenGiaoVien ?? "—")" disabled />
+                }
+                else if (giaoVienHienTai != null)
+                {
+                    <input class="form-control" value="@giaoVienHienTai.HoTen (@giaoVienHienTai.MaGiaoVien)" disabled />
+                }
+                else
+                {
+                    <select asp-for="GiaoVienId" asp-items="giaoVienList" class="form-select">
+                        <option value="">-- Chọn giảng viên --</option>
+                    </select>
+                    <span asp-validation-for="GiaoVienId" class="text-danger"></span>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ===== Chọn câu hỏi (dethi-form.js) ===== *@
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Ngân hàng câu hỏi <small id="soCauNganHang" class="text-muted"></small></h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-2 mb-2">
+                    <div class="col-12">
+                        <input id="timCauHoi" class="form-control form-control-sm" placeholder="Tìm theo nội dung, danh mục..." />
+                    </div>
+                    <div class="col-12">
+                        @* Danh mục của môn đang chọn (dethi-form.js đổ vào); danh mục cha gồm cả danh mục con *@
+                        <select id="locDanhMucCau" class="form-select form-select-sm">
+                            <option value="">Tất cả danh mục</option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <select id="locLoaiCau" class="form-select form-select-sm">
+                            <option value="">Tất cả loại</option>
+                            <option value="1">Trắc nghiệm</option>
+                            <option value="2">Tự luận</option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <select id="locMucDoCau" class="form-select form-select-sm">
+                            <option value="">Tất cả mức độ</option>
+                            <option value="1">Dễ</option>
+                            <option value="2">Trung bình</option>
+                            <option value="3">Khó</option>
+                            <option value="4">Rất khó</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="dsNganHang" class="list-group small" style="max-height: 520px; overflow-y: auto">
+                    <div class="list-group-item text-muted">Chọn môn học để hiện câu hỏi.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <h5 class="mb-0">Câu hỏi trong đề <small id="soCauDaChon" class="text-muted"></small></h5>
+                <button type="button" id="btnChiaDeu" class="btn btn-sm btn-outline-secondary" title="Chia đều tổng điểm cho các câu">
+                    <i class="bi bi-distribute-vertical"></i> Chia đều điểm
+                </button>
+            </div>
+            <div class="card-body">
+                @if (loiCauHoi != null)
+                {
+                    foreach (var e in loiCauHoi)
+                    {
+                        <div class="alert alert-danger py-1 px-2 small mb-2">@e.ErrorMessage</div>
+                    }
+                }
+                <div id="tongDiemDe" class="alert py-2 small mb-2"></div>
+                @* Câu đã chọn: dữ liệu ban đầu (khi form bị trả về do lỗi) nằm trong data-chon *@
+                <div id="dsDaChon" class="list-group small" style="max-height: 470px; overflow-y: auto"
+                     data-chon="@Json.Serialize(Model.CauHois).ToString()"></div>
+                <div id="hiddenCauHois"></div>
+            </div>
+        </div>
+    </div>
+</div>

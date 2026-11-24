@@ -1,0 +1,32 @@
+@model MonHoc
+@{
+    ViewData["Title"] = "Thêm môn học";
+}
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="bi bi-plus-circle"></i> Thêm môn học</h4>
+            </div>
+            <div class="card-body">
+                <form asp-action="Create" method="post">
+                    <partial name="_MonHocForm" model="Model" />
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Thêm
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Hủy
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/monhoc.js" asp-append-version="true"></script>
+}

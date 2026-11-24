@@ -1,0 +1,114 @@
+@using ExamOnlineSystem.Models.ViewModels
+@model HoSoSinhVienVM
+@{
+    ViewData["Title"] = "Hồ sơ cá nhân";
+    var sv = Model.SinhVien;
+    var chuCai = sv.HoTen.Split(' ', StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?.Substring(0, 1).ToUpper() ?? "?";
+}
+
+@* Layout công khai không bọc nội dung trong container -> tự bọc để có lề, không tràn ngang *@
+<div class="container-xl py-4">
+    <h3 class="text-black-50 mb-3"><i class="bi bi-person-vcard"></i> Hồ sơ cá nhân</h3>
+
+    <div class="row g-3">
+        @* ===== Cột trái: thẻ sinh viên + thông tin học tập ===== *@
+        <div class="col-lg-5">
+            <div class="card shadow-sm mb-3">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-primary text-white fw-bold fs-3 flex-shrink-0"
+                          style="width:72px;height:72px">@chuCai</span>
+                    <div>
+                        <div class="fs-5 fw-semibold">@sv.HoTen</div>
+                        <div class="text-muted">Sinh viên · Mã SV <strong>@sv.MaSinhVien</strong></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-white"><h5 class="mb-0"><i class="bi bi-person"></i> Thông tin cá nhân &amp; học tập</h5></div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-5">Họ và tên</dt>
+                        <dd class="col-7">@sv.HoTen</dd>
+
+                        <dt class="col-5">Ngày sinh</dt>
+                        <dd class="col-7">@sv.NgaySinh.ToString("dd/MM/yyyy")</dd>
+
+                        @* GioiTinh: true = Nam, false = Nữ *@
+                        <dt class="col-5">Giới tính</dt>
+                        <dd class="col-7">@(sv.GioiTinh ? "Nam" : "Nữ")</dd>
+
+                        <dt class="col-5">Lớp</dt>
+                        <dd class="col-7">@(sv.Lop != null ? $"{sv.Lop.MaLop} – {sv.Lop.TenLop}" : "—")</dd>
+
+                        <dt class="col-5">Khoa</dt>
+                        <dd class="col-7">@(sv.Khoa?.TenKhoa ?? "—")</dd>
+
+                        <dt class="col-5">Email (tên đăng nhập)</dt>
+                        <dd class="col-7 text-break">@sv.Email</dd>
+
+                        <dt class="col-5">Ngày tạo tài khoản</dt>
+                        <dd class="col-7">@(Model.NgayTaoTaiKhoan?.ToLocalTime().ToString("dd/MM/yyyy") ?? "—")</dd>
+
+                        <dt class="col-5">Đăng nhập gần nhất</dt>
+                        <dd class="col-7 mb-0">@(Model.LanDangNhapCuoi?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "—")</dd>
+                    </dl>
+                </div>
+                <div class="card-footer bg-white small text-muted">
+                    <i class="bi bi-info-circle"></i> Họ tên, ngày sinh, lớp và email do nhà trường quản lý.
+                    Nếu có sai sót, vui lòng liên hệ phòng đào tạo.
+                </div>
+            </div>
+        </div>
+
+        @* ===== Cột phải: tự cập nhật ===== *@
+        <div class="col-lg-7">
+            <div class="card shadow-sm mb-3">
+                <div class="card-header bg-white"><h5 class="mb-0"><i class="bi bi-telephone"></i> Thông tin liên hệ</h5></div>
+                <div class="card-body">
+                    <form asp-action="CapNhatLienHe" method="post">
+                        <label asp-for="LienHe.SoDienThoai" class="form-label"></label>
+                        <div class="input-group">
+                            <input asp-for="LienHe.SoDienThoai" class="form-control" placeholder="0901234567" inputmode="tel" />
+                            <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle"></i> Lưu</button>
+                        </div>
+                        <span asp-validation-for="LienHe.SoDienThoai" class="text-danger small"></span>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-white"><h5 class="mb-0"><i class="bi bi-shield-lock"></i> Đổi mật khẩu</h5></div>
+                <div class="card-body">
+                    <form asp-action="DoiMatKhau" method="post" autocomplete="off">
+                        <div class="mb-3">
+                            <label asp-for="DoiMatKhau.MatKhauHienTai" class="form-label"></label>
+                            <input asp-for="DoiMatKhau.MatKhauHienTai" class="form-control" autocomplete="current-password" value="" />
+                            <span asp-validation-for="DoiMatKhau.MatKhauHienTai" class="text-danger small"></span>
+                        </div>
+                        <div class="row g-3 mb-3">
+                            <div class="col-sm-6">
+                                <label asp-for="DoiMatKhau.MatKhauMoi" class="form-label"></label>
+                                <input asp-for="DoiMatKhau.MatKhauMoi" class="form-control" autocomplete="new-password" value="" />
+                                <span asp-validation-for="DoiMatKhau.MatKhauMoi" class="text-danger small"></span>
+                            </div>
+                            <div class="col-sm-6">
+                                <label asp-for="DoiMatKhau.XacNhanMatKhau" class="form-label"></label>
+                                <input asp-for="DoiMatKhau.XacNhanMatKhau" class="form-control" autocomplete="new-password" value="" />
+                                <span asp-validation-for="DoiMatKhau.XacNhanMatKhau" class="text-danger small"></span>
+                            </div>
+                        </div>
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                            <span class="small text-muted">Ít nhất 6 ký tự, có chữ số.</span>
+                            <button type="submit" class="btn btn-outline-primary"><i class="bi bi-key"></i> Đổi mật khẩu</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

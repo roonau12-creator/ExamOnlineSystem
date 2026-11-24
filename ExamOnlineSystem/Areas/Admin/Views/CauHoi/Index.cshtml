@@ -1,0 +1,76 @@
+@using ExamOnlineSystem.Models.ViewModels
+@{
+    ViewData["Title"] = "Quản lý câu hỏi";
+    var danhMucs = ViewData["DanhMucList"] as List<DanhMucCauHoiNode> ?? new();
+}
+<div class="text-center text-black-50">
+    <h3>Quản lý câu hỏi</h3>
+</div>
+
+<div class="text-end mb-3">
+    <a asp-action="Import" class="btn btn-outline-success"><i class="bi bi-file-earmark-excel"></i>Nhập từ Excel</a>
+    <a asp-action="Create" class="btn btn-outline-danger"><i class="bi bi-plus-circle"></i>Thêm câu hỏi</a>
+</div>
+
+@* Bộ lọc nhanh: lọc trực tiếp trên bảng (cauhoi.js) *@
+<div class="row g-2 mb-3">
+    <div class="col-sm-6 col-md-3">
+        <select id="locMonHoc" class="form-select">
+            <option value="">-- Tất cả môn học --</option>
+        </select>
+    </div>
+    <div class="col-sm-6 col-md-3">
+        @* Lọc danh mục cha gồm cả danh mục con/cháu; chỉ hiện danh mục của môn đang lọc (cauhoi.js) *@
+        <select id="locDanhMuc" class="form-select">
+            <option value="">-- Tất cả danh mục --</option>
+            @foreach (var n in danhMucs)
+            {
+                var thutLe = n.Cap > 1 ? new string('\u00A0', (n.Cap - 1) * 4) + "└ " : "";
+                <option value="@n.DanhMuc.Id" data-ten-mon="@n.DanhMuc.MonHoc?.TenMonHoc">@(thutLe + n.DanhMuc.TenDanhMuc)</option>
+            }
+        </select>
+    </div>
+    <div class="col-sm-6 col-md-3">
+        <select id="locLoai" class="form-select">
+            <option value="">-- Tất cả loại câu hỏi --</option>
+            <option>Trắc nghiệm</option>
+            <option>Tự luận</option>
+        </select>
+    </div>
+    <div class="col-sm-6 col-md-3">
+        <select id="locMucDo" class="form-select">
+            <option value="">-- Tất cả mức độ --</option>
+            <option>Dễ</option>
+            <option>Trung bình</option>
+            <option>Khó</option>
+            <option>Rất khó</option>
+        </select>
+    </div>
+    <div class="col-sm-6 col-md-3 d-flex align-items-center">
+        <button type="button" id="xoaLoc" class="btn btn-sm btn-link text-decoration-none"><i class="bi bi-x-circle"></i> Bỏ lọc</button>
+    </div>
+</div>
+
+<table id="tblCauHoi" class="table table-bordered table-hover w-100">
+    <thead>
+        <tr>
+            <th class="bg-primary text-white-50">Nội dung</th>
+            <th class="bg-primary text-white-50">Danh mục</th>
+            <th class="bg-primary text-white-50">Môn học</th>
+            <th class="bg-primary text-white-50">Loại</th>
+            <th class="bg-primary text-white-50">Mức độ</th>
+            <th class="bg-primary text-white-50">Điểm</th>
+            <th class="bg-primary text-white-50">Số đáp án</th>
+            <th class="bg-primary text-white-50">Giảng viên</th>
+            <th class="bg-primary text-white-50">Chức năng</th>
+        </tr>
+    </thead>
+</table>
+
+<form id="deleteForm" method="post">
+    @Html.AntiForgeryToken()
+</form>
+
+@section Scripts {
+    <script src="~/js/cauhoi.js" asp-append-version="true"></script>
+}

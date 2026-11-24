@@ -1,0 +1,167 @@
+@using ExamOnlineSystem.Models.ViewModels
+@model CauHoiFormVM
+@* Các trường nhập liệu dùng chung cho Thêm / Sửa câu hỏi (cauhoi-form.js xử lý lọc danh mục và đáp án) *@
+@{
+    var danhMucs = ViewData["DanhMucList"] as List<DanhMucCauHoiNode> ?? new();
+    var giaoVienHienTai = ViewData["GiaoVienHienTai"] as GiaoVien;
+    var giaoVienList = ViewData["GiaoVienList"] as SelectList;
+    var loiDapAn = ViewData.ModelState[nameof(CauHoiFormVM.DapAns)]?.Errors;
+}
+<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-6">
+        <label asp-for="MonHocId" class="form-label"></label>
+        <select asp-for="MonHocId" asp-items='ViewData["MonHocList"] as SelectList' class="form-select">
+            <option value="">-- Chọn môn học --</option>
+        </select>
+    </div>
+    <div class="col-md-6">
+        <label asp-for="DanhMucCauHoiId" class="form-label"></label>
+        @* Lọc theo môn học đang chọn; thụt lề theo cấp danh mục *@
+        <select asp-for="DanhMucCauHoiId" class="form-select">
+            <option value="">-- Chọn danh mục --</option>
+            @foreach (var n in danhMucs)
+            {
+                var thutLe = n.Cap > 1 ? new string(' ', (n.Cap - 1) * 4) + "└ " : "";
+                <option value="@n.DanhMuc.Id" data-mon-hoc-id="@n.DanhMuc.MonHocId">@(thutLe + n.DanhMuc.TenDanhMuc)</option>
+            }
+        </select>
+        <span asp-validation-for="DanhMucCauHoiId" class="text-danger"></span>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-4">
+        <label asp-for="LoaiCauHoi" class="form-label"></label>
+        <select asp-for="LoaiCauHoi" class="form-select">
+            <option value="1">Trắc nghiệm</option>
+            <option value="2">Tự luận</option>
+        </select>
+        <span asp-validation-for="LoaiCauHoi" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="MucDo" class="form-label"></label>
+        <select asp-for="MucDo" class="form-select">
+            <option value="1">Dễ</option>
+            <option value="2">Trung bình</option>
+            <option value="3">Khó</option>
+            <option value="4">Rất khó</option>
+        </select>
+        <span asp-validation-for="MucDo" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="DiemMacDinh" class="form-label"></label>
+        <input asp-for="DiemMacDinh" type="number" step="0.25" min="0.25" class="form-control" />
+        <span asp-validation-for="DiemMacDinh" class="text-danger"></span>
+    </div>
+</div>
+
+<div class="mb-3">
+    <label class="form-label">Giảng viên</label>
+    @if (Model.Id > 0)
+    {
+        @* Sửa: giữ nguyên giảng viên đã tạo câu hỏi *@
+        <input class="form-control" value="@(Model.TenGiaoVien ?? "—")" disabled />
+    }
+    else if (giaoVienHienTai != null)
+    {
+        <input class="form-control" value="@giaoVienHienTai.HoTen (@giaoVienHienTai.MaGiaoVien)" disabled />
+    }
+    else
+    {
+        <select asp-for="GiaoVienId" asp-items="giaoVienList" class="form-select">
+            <option value="">-- Chọn giảng viên --</option>
+        </select>
+        @if (giaoVienList == null || !giaoVienList.Any())
+        {
+            <div class="form-text text-danger">Chưa có giảng viên nào trong hệ thống. Vui lòng thêm giảng viên trước.</div>
+        }
+        <span asp-validation-for="GiaoVienId" class="text-danger"></span>
+    }
+</div>
+
+<div class="mb-3">
+    <label asp-for="NoiDung" class="form-label"></label>
+    <textarea asp-for="NoiDung" class="form-control" rows="4" placeholder="Nhập nội dung câu hỏi"></textarea>
+    <span asp-validation-for="NoiDung" class="text-danger"></span>
+</div>
+
+@* Ảnh minh họa (không bắt buộc). Khi sửa: hiện ảnh hiện tại, có thể thay hoặc xóa *@
+<div class="mb-3">
+    <label asp-for="HinhAnhFile" class="form-label"></label>
+    @{
+        var anhHienTai = Model.Id > 0 && Model.HinhAnh != null
+            ? Url.Action("HinhAnh", new { id = Model.Id, v = Model.HinhAnh })
+            : null;
+    }
+    <div id="khungXemTruocAnh" class="mb-2 @(anhHienTai == null ? "d-none" : "")">
+        <img id="xemTruocAnh" src="@anhHienTai" data-anh-goc="@anhHienTai" alt="Ảnh minh họa"
+             class="img-thumbnail" style="max-height: 240px" />
+    </div>
+    <input asp-for="HinhAnhFile" type="file" class="form-control" accept=".jpg,.jpeg,.png,.gif,.webp" />
+    <div class="form-text">Ảnh .jpg, .png, .gif, .webp, tối đa 5 MB. @(anhHienTai != null ? "Chọn ảnh mới để thay ảnh hiện tại." : "")</div>
+    <span asp-validation-for="HinhAnhFile" class="text-danger"></span>
+    @if (anhHienTai != null)
+    {
+        <div class="form-check mt-2">
+            <input asp-for="XoaHinhAnh" class="form-check-input" />
+            <label asp-for="XoaHinhAnh" class="form-check-label">Xóa ảnh hiện tại</label>
+        </div>
+    }
+</div>
+
+@* Đáp án: chỉ hiện với câu trắc nghiệm *@
+<div id="khungDapAn" class="mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <label class="form-label mb-0">Đáp án <small class="text-muted">(tick ô bên trái để đánh dấu đáp án đúng)</small></label>
+        <button type="button" id="btnThemDapAn" class="btn btn-sm btn-outline-success">
+            <i class="bi bi-plus-lg"></i> Thêm đáp án
+        </button>
+    </div>
+    @if (loiDapAn != null)
+    {
+        foreach (var e in loiDapAn)
+        {
+            <div class="text-danger small mb-1">@e.ErrorMessage</div>
+        }
+    }
+    <div id="dsDapAn">
+        @for (var i = 0; i < Model.DapAns.Count; i++)
+        {
+            <div class="input-group mb-2 dap-an">
+                <input type="hidden" class="dap-an-id" name="DapAns[@i].Id" value="@Model.DapAns[i].Id" />
+                <span class="input-group-text dap-an-nhan">@((char)('A' + i))</span>
+                <div class="input-group-text">
+                    <input class="form-check-input mt-0 dap-an-dung" type="checkbox" value="true"
+                           name="DapAns[@i].DapAnDung" checked="@Model.DapAns[i].DapAnDung" title="Đáp án đúng" />
+                </div>
+                <input type="text" class="form-control dap-an-noi-dung" name="DapAns[@i].NoiDung"
+                       value="@Model.DapAns[i].NoiDung" placeholder="Nội dung đáp án" />
+                <button type="button" class="btn btn-outline-danger btn-xoa-dap-an" title="Xóa đáp án">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="mb-3">
+    <label asp-for="GiaiThich" class="form-label"></label>
+    <textarea asp-for="GiaiThich" class="form-control" rows="3" placeholder="Giải thích đáp án hoặc gợi ý chấm (không bắt buộc)"></textarea>
+</div>
+
+@* Mẫu một dòng đáp án, cauhoi-form.js sao chép khi bấm "Thêm đáp án" *@
+<template id="mauDapAn">
+    <div class="input-group mb-2 dap-an">
+        <input type="hidden" class="dap-an-id" value="0" />
+        <span class="input-group-text dap-an-nhan"></span>
+        <div class="input-group-text">
+            <input class="form-check-input mt-0 dap-an-dung" type="checkbox" value="true" title="Đáp án đúng" />
+        </div>
+        <input type="text" class="form-control dap-an-noi-dung" placeholder="Nội dung đáp án" />
+        <button type="button" class="btn btn-outline-danger btn-xoa-dap-an" title="Xóa đáp án">
+            <i class="bi bi-x-lg"></i>
+        </button>
+    </div>
+</template>

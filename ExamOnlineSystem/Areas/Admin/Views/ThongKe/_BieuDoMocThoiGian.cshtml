@@ -1,0 +1,245 @@
+@using System.Globalization
+@using ExamOnlineSystem.Models.ViewModels
+@model List<MocThongKeVM>
+@*
+    Biểu đồ cột cho một chuỗi mốc thời gian (tháng / học kỳ / năm học). Dùng CSS thuần, không cần
+    thư viện ngoài. Gồm 2 biểu đồ dùng chung trục X:
+      - Lượt dự thi: cột xếp tầng "đã nộp" (xanh) + "chưa nộp" (cam)
+      - Điểm trung bình (thang 10): cột đơn (tím) kèm vạch mốc điểm 5
+    Mọi con số đều đọc được ở bảng số liệu bên dưới, không chỉ ở tooltip.
+*@
+@{
+    var mocs = Model ?? new List<MocThongKeVM>();
+    var coDuLieu = mocs.Any(m => m.CoDuLieu);
+    var hienLopHocPhan = mocs.Any(m => m.SoLopHocPhan > 0);
+    var coDiem = mocs.Any(m => m.DiemTrungBinhHe10.HasValue);
+
+    // Trần trục Y làm tròn lên mốc dễ đọc để chiều cao cột có nghĩa
+    int TrucY(int max)
+    {
+        if (max <= 0)
+        {
+            return 1;
+        }
+        foreach (var buoc in new[] { 1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 5000, 10000 })
+        {
+            if (max <= buoc)
+            {
+                return buoc;
+            }
+        }
+        return (int)(Math.Ceiling(max / 10000.0) * 10000);
+    }
+
+    // CSS luôn dùng dấu chấm thập phân, không theo culture của máy chủ
+    string Pct(double v) => v.ToString("0.##", CultureInfo.InvariantCulture) + "%";
+
+    var tranLuot = TrucY(mocs.Count == 0 ? 0 : mocs.Max(m => m.SoLuotDuThi));
+
+    // Nhãn trực tiếp chỉ đặt ở mốc cao nhất và mốc hiện tại (không ghi số trên mọi cột)
+    var mocCaoNhat = mocs.Where(m => m.SoLuotDuThi > 0)
+        .OrderByDescending(m => m.SoLuotDuThi)
+        .FirstOrDefault();
+    var mocDiemCaoNhat = mocs.Where(m => m.DiemTrungBinhHe10.HasValue)
+        .OrderByDescending(m => m.DiemTrungBinhHe10)
+        .FirstOrDefault();
+
+    string NoiDungTooltip(MocThongKeVM m)
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.Append("<div class='text-start'><div class='fw-semibold mb-1'>")
+            .Append(Html.Encode(m.NhanDayDu)).Append("</div>");
+        sb.Append("Lịch thi: ").Append(m.SoLichThi).Append("<br>");
+        if (hienLopHocPhan)
+        {
+            sb.Append("Lớp học phần: ").Append(m.SoLopHocPhan).Append("<br>");
+        }
+        sb.Append("Lượt dự thi: ").Append(m.SoLuotDuThi);
+        if (m.SoLuotDuThi > 0)
+        {
+            sb.Append(" (đã nộp ").Append(m.SoBaiDaNop)
+                .Append(", chưa nộp ").Append(m.SoChuaNop).Append(')');
+        }
+        sb.Append("<br>");
+        sb.Append("Đã chấm: ").Append(m.SoBaiDaCham);
+        if (m.SoBaiDaCham > 0)
+        {
+            sb.Append(" · đạt ").Append(m.SoBaiDat).Append(" (").Append(m.TiLeDat).Append("%)");
+        }
+        sb.Append("<br>");
+        sb.Append("Điểm TB: ")
+            .Append(m.DiemTrungBinhHe10?.ToString("0.##", CultureInfo.InvariantCulture) ?? "—")
+            .Append("/10");
+        sb.Append("</div>");
+        return sb.ToString();
+    }
+}
+
+@if (!coDuLieu)
+{
+    <p class="text-muted small mb-0">
+        <i class="bi bi-info-circle"></i> Chưa có lịch thi hoặc lượt dự thi nào trong khoảng thời gian này.
+    </p>
+    return;
+}
+
+@* Chú giải: luôn hiện vì biểu đồ có 2 chuỗi dữ liệu *@
+<div class="d-flex flex-wrap align-items-center gap-3 small text-muted mb-2">
+    <span><span class="tk-o tk-nop"></span> Đã nộp</span>
+    <span><span class="tk-o tk-chua"></span> Chưa nộp</span>
+    @if (coDiem)
+    {
+        <span><span class="tk-o tk-diem"></span> Điểm trung bình (thang 10)</span>
+    }
+</div>
+
+@* Biểu đồ 1: lượt dự thi *@
+<div class="tk-hang">
+    <div class="tk-y">
+        <span>@tranLuot</span>
+        <span>@(tranLuot / 2)</span>
+        <span>0</span>
+    </div>
+    <div class="tk-khung" style="height:188px">
+        <div class="tk-luoi" aria-hidden="true"><i></i><i></i><i></i></div>
+        <div class="tk-cots">
+            @foreach (var m in mocs)
+            {
+                var caoNop = m.SoBaiDaNop * 100.0 / tranLuot;
+                var caoChua = m.SoChuaNop * 100.0 / tranLuot;
+                var caoTong = caoNop + caoChua;
+                var coNhan = m.SoLuotDuThi > 0 && (m.LaHienTai || ReferenceEquals(m, mocCaoNhat));
+                <div class="tk-cot @(m.LaHienTai ? "tk-cot-nay" : "")" tabindex="0" role="img"
+                     aria-label="@m.NhanDayDu: @m.SoLuotDuThi lượt dự thi, @m.SoBaiDaNop đã nộp"
+                     data-bs-toggle="tooltip" data-bs-html="true" title="@NoiDungTooltip(m)">
+                    @if (coNhan)
+                    {
+                        <span class="tk-nhan" style="bottom:calc(@Pct(caoTong) + 3px)">@m.SoLuotDuThi</span>
+                    }
+                    <div class="tk-than">
+                        @if (m.SoChuaNop > 0)
+                        {
+                            <div class="tk-doan tk-chua tk-dinh @(m.SoBaiDaNop > 0 ? "tk-ho" : "")"
+                                 style="height:@Pct(caoChua)"></div>
+                        }
+                        @if (m.SoBaiDaNop > 0)
+                        {
+                            <div class="tk-doan tk-nop @(m.SoChuaNop == 0 ? "tk-dinh" : "")"
+                                 style="height:@Pct(caoNop)"></div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@* Biểu đồ 2: điểm trung bình – dùng chung trục X, thang riêng 0–10 (không vẽ chung một trục với lượt dự thi) *@
+@if (coDiem)
+{
+    <div class="tk-hang mt-3">
+        <div class="tk-y">
+            <span>10</span>
+            <span>5</span>
+            <span>0</span>
+        </div>
+        <div class="tk-khung" style="height:90px">
+            <div class="tk-nguong" aria-hidden="true"><i></i></div>
+            <div class="tk-cots">
+                @foreach (var m in mocs)
+                {
+                    var diem = m.DiemTrungBinhHe10;
+                    var caoDiem = (diem ?? 0) * 10;
+                    var coNhan = diem.HasValue && (m.LaHienTai || ReferenceEquals(m, mocDiemCaoNhat));
+                    <div class="tk-cot @(m.LaHienTai ? "tk-cot-nay" : "")" tabindex="0" role="img"
+                         aria-label="@m.NhanDayDu: điểm trung bình @(diem?.ToString("0.##", CultureInfo.InvariantCulture) ?? "chưa có")"
+                         data-bs-toggle="tooltip" data-bs-html="true" title="@NoiDungTooltip(m)">
+                        @if (coNhan)
+                        {
+                            <span class="tk-nhan" style="bottom:calc(@Pct(caoDiem) + 3px)">
+                                @(diem!.Value.ToString("0.##", CultureInfo.InvariantCulture))
+                            </span>
+                        }
+                        <div class="tk-than">
+                            @if (diem.HasValue)
+                            {
+                                <div class="tk-doan tk-diem tk-dinh" style="height:@Pct(caoDiem)"></div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@* Trục X dùng chung cho cả hai biểu đồ *@
+<div class="tk-hang">
+    <div class="tk-y"></div>
+    <div class="tk-truc-x">
+        @{
+            string? nhanPhuTruoc = null;
+        }
+        @foreach (var m in mocs)
+        {
+            var hienNhanPhu = !string.IsNullOrEmpty(m.NhanPhu) && m.NhanPhu != nhanPhuTruoc;
+            nhanPhuTruoc = m.NhanPhu;
+            <div class="tk-x @(m.LaHienTai ? "fw-semibold text-body" : "")">
+                <span class="d-block text-truncate">@m.Nhan</span>
+                <span class="d-block text-truncate tk-x-phu">@(hienNhanPhu ? m.NhanPhu : "")</span>
+            </div>
+        }
+    </div>
+</div>
+
+@* Bảng số liệu: mọi giá trị đều đọc được không cần hover *@
+<details class="mt-3">
+    <summary class="small text-muted">Xem bảng số liệu</summary>
+    <div class="table-responsive mt-2">
+        <table class="table table-sm table-hover small align-middle mb-0 tk-bang">
+            <thead class="table-light">
+            <tr>
+                <th>Mốc</th>
+                <th class="text-end">Lịch thi</th>
+                @if (hienLopHocPhan)
+                {
+                    <th class="text-end">Lớp HP</th>
+                }
+                <th class="text-end">Lượt dự thi</th>
+                <th class="text-end">Đã nộp</th>
+                <th class="text-end">Tỉ lệ nộp</th>
+                <th class="text-end">Đã chấm</th>
+                <th class="text-end">Đạt</th>
+                <th class="text-end">Tỉ lệ đạt</th>
+                <th class="text-end">Điểm TB</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var m in mocs)
+            {
+                <tr class="@(m.LaHienTai ? "table-primary" : "")">
+                    <td>
+                        @m.NhanDayDu
+                        @if (m.LaHienTai)
+                        {
+                            <span class="badge text-bg-primary ms-1">Hiện tại</span>
+                        }
+                    </td>
+                    <td class="text-end">@m.SoLichThi</td>
+                    @if (hienLopHocPhan)
+                    {
+                        <td class="text-end">@m.SoLopHocPhan</td>
+                    }
+                    <td class="text-end">@m.SoLuotDuThi</td>
+                    <td class="text-end">@m.SoBaiDaNop</td>
+                    <td class="text-end">@(m.SoLuotDuThi == 0 ? "—" : m.TiLeNop + "%")</td>
+                    <td class="text-end">@m.SoBaiDaCham</td>
+                    <td class="text-end">@m.SoBaiDat</td>
+                    <td class="text-end">@(m.SoBaiDaCham == 0 ? "—" : m.TiLeDat + "%")</td>
+                    <td class="text-end">@(m.DiemTrungBinhHe10?.ToString("0.##") ?? "—")</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</details>

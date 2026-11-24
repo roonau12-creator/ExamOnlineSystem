@@ -1,0 +1,372 @@
+@using ExamOnlineSystem.Models.ViewModels
+@model ExamOnlineSystem.Models.ViewModels.ThongKeSinhVienTongQuanVM
+@{
+    ViewData["Title"] = "Thống kê sinh viên";
+
+    var topDiem = Model.SinhViens.Where(s => s.DiemTrungBinhHe10.HasValue)
+        .OrderByDescending(s => s.DiemTrungBinhHe10).ThenBy(s => s.MaSinhVien).Take(5).ToList();
+    var canChuY = Model.SinhViens.Where(s => s.SoBaiCoDiem > 0 && s.DiemTrungBinhHe10 < 5)
+        .OrderBy(s => s.DiemTrungBinhHe10).Take(5).ToList();
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h3 class="text-black-50 mb-0"><i class="bi bi-mortarboard"></i> Thống kê sinh viên</h3>
+    <div class="d-flex flex-wrap gap-2">
+        <a asp-action="XuatExcelSinhVien" class="btn btn-outline-success">
+            <i class="bi bi-file-earmark-excel"></i> Xuất Excel
+        </a>
+        <a asp-action="GiaoVien" class="btn btn-outline-secondary">
+            <i class="bi bi-graph-up-arrow"></i> Thống kê giảng viên
+        </a>
+        <a asp-controller="SinhVien" asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-person-vcard"></i> Danh sách sinh viên
+        </a>
+    </div>
+</div>
+
+@if (Model.TongSinhVien == 0)
+{
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> Chưa có sinh viên nào trong hệ thống.
+        <a asp-controller="SinhVien" asp-action="Create">Thêm sinh viên</a> để bắt đầu.
+    </div>
+    return;
+}
+
+@* Thống kê nhanh *@
+<div class="row g-3 mb-3">
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-primary h-100"><div class="card-body py-2">
+            <div class="text-muted small">Sinh viên</div>
+            <div class="fs-4 fw-bold text-primary">@Model.TongSinhVien</div>
+            <div class="small text-muted">
+                @Model.SoNam nam, @Model.SoNu nữ
+                @if (Model.SoDaKhoa > 0)
+                {
+                    <span class="text-danger">· @Model.SoDaKhoa đã khóa</span>
+                }
+            </div>
+        </div></div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-success h-100"><div class="card-body py-2">
+            <div class="text-muted small">Đã dự thi</div>
+            <div class="fs-4 fw-bold text-success">@Model.SoDaThi</div>
+            <div class="small text-muted">
+                @Model.SoChuaThi có lịch thi nhưng chưa thi · @Model.SoChuaCoLichThi chưa có lịch thi
+            </div>
+        </div></div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-info h-100"><div class="card-body py-2">
+            <div class="text-muted small">Điểm trung bình (hệ 10)</div>
+            <div class="fs-4 fw-bold text-info">@(Model.DiemTrungBinhHe10?.ToString("0.##") ?? "—")</div>
+            <div class="small text-muted">
+                @Model.TongBaiCoDiem/@Model.TongBaiDaNop bài đã chấm
+                @if (Model.TongBaiChuaCham > 0)
+                {
+                    <span class="text-danger">· @Model.TongBaiChuaCham chưa chấm</span>
+                }
+            </div>
+        </div></div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-warning h-100"><div class="card-body py-2">
+            <div class="text-muted small">Tỉ lệ đạt (≥ 5)</div>
+            <div class="fs-4 fw-bold text-warning">@(Model.TongBaiCoDiem == 0 ? "—" : Model.TiLeDat + "%")</div>
+            <div class="small text-muted">@Model.TongBaiDat/@Model.TongBaiCoDiem bài · nộp bài @Model.TiLeNop%</div>
+        </div></div>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    @* Phân bố xếp loại *@
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-bar-chart-line"></i> Xếp loại theo điểm trung bình</h5>
+            </div>
+            <div class="card-body">
+                @if (Model.TongBaiCoDiem == 0)
+                {
+                    <p class="text-muted mb-0"><i class="bi bi-info-circle"></i> Chưa có bài thi nào được chấm điểm.</p>
+                }
+                else
+                {
+                    foreach (var k in Model.PhanBoXepLoai)
+                    {
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <div class="text-nowrap small" style="width:150px">
+                                <span class="badge text-bg-@k.Mau">@k.XepLoai</span>
+                                <span class="text-muted">@k.Nhan</span>
+                            </div>
+                            <div class="progress flex-grow-1" role="progressbar" aria-valuenow="@k.TiLe" aria-valuemin="0" aria-valuemax="100" style="height:1.25rem">
+                                <div class="progress-bar bg-@k.Mau" style="width:@k.TiLe%">@(k.TiLe > 8 ? k.TiLe + "%" : "")</div>
+                            </div>
+                            <div class="text-nowrap small text-muted" style="width:70px">@k.SoLuong SV</div>
+                        </div>
+                    }
+                    <hr />
+                    <div class="small text-muted">
+                        <i class="bi bi-info-circle"></i> Tính trên @Model.SinhViens.Count(s => s.DiemTrungBinhHe10.HasValue) sinh viên đã có điểm.
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    @* Top điểm cao / cần chú ý *@
+    <div class="col-lg-6">
+        <div class="row g-3 h-100">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white py-2">
+                        <h6 class="mb-0"><i class="bi bi-trophy text-warning"></i> Điểm trung bình cao nhất</h6>
+                    </div>
+                    <div class="card-body py-2">
+                        @if (topDiem.Count == 0)
+                        {
+                            <p class="text-muted small mb-0">Chưa có sinh viên nào có điểm.</p>
+                        }
+                        else
+                        {
+                            foreach (var s in topDiem)
+                            {
+                                <div class="d-flex justify-content-between align-items-center small py-1">
+                                    <span>
+                                        <a asp-action="SinhVienChiTiet" asp-route-id="@s.Id" class="text-decoration-none">@s.HoTen</a>
+                                        <span class="text-muted">· @s.MaLop</span>
+                                    </span>
+                                    <span class="badge text-bg-@KetQuaLabel.MauXepLoai(s.XepLoai)">@s.DiemTrungBinhHe10!.Value.ToString("0.##")</span>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white py-2">
+                        <h6 class="mb-0"><i class="bi bi-exclamation-triangle text-danger"></i> Cần chú ý (dưới 5 điểm)</h6>
+                    </div>
+                    <div class="card-body py-2">
+                        @if (canChuY.Count == 0)
+                        {
+                            <p class="text-muted small mb-0">Không có sinh viên nào dưới 5 điểm.</p>
+                        }
+                        else
+                        {
+                            foreach (var s in canChuY)
+                            {
+                                <div class="d-flex justify-content-between align-items-center small py-1">
+                                    <span>
+                                        <a asp-action="SinhVienChiTiet" asp-route-id="@s.Id" class="text-decoration-none">@s.HoTen</a>
+                                        <span class="text-muted">· @s.MaLop</span>
+                                    </span>
+                                    <span class="badge text-bg-@KetQuaLabel.MauXepLoai(s.XepLoai)">@s.DiemTrungBinhHe10!.Value.ToString("0.##")</span>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Gộp theo khoa / lớp *@
+<div class="row g-3 mb-3">
+    @foreach (var (tieuDe, icon, nhom, coCha) in new[]
+    {
+        ("Theo khoa", "bi-building", Model.TheoKhoa, false),
+        ("Theo lớp", "bi-people", Model.TheoLop, true)
+    })
+    {
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi @icon"></i> @tieuDe (@nhom.Count)</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="bg-primary text-white-50">@(coCha ? "Lớp" : "Khoa")</th>
+                                    <th class="bg-primary text-white-50 text-center">Sĩ số</th>
+                                    <th class="bg-primary text-white-50 text-center">Đã thi</th>
+                                    <th class="bg-primary text-white-50 text-center">Đã nộp</th>
+                                    <th class="bg-primary text-white-50 text-center">Điểm TB</th>
+                                    <th class="bg-primary text-white-50 text-center">Tỉ lệ đạt</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var n in nhom)
+                                {
+                                    <tr>
+                                        <td>
+                                            @n.Ten
+                                            <div class="small text-muted">
+                                                @(coCha && !string.IsNullOrWhiteSpace(n.TenCha) ? n.TenCha + " · " : "")@n.SoNam nam, @n.SoNu nữ
+                                            </div>
+                                        </td>
+                                        <td class="text-center">@n.SoSinhVien</td>
+                                        <td class="text-center">@n.SoDaThi</td>
+                                        <td class="text-center">@n.SoBaiDaNop<span class="text-muted small">/@n.SoLuotDuThi</span></td>
+                                        <td class="text-center">
+                                            @if (n.DiemTrungBinhHe10.HasValue)
+                                            {
+                                                <span class="badge text-bg-@KetQuaLabel.MauXepLoai(KetQuaLabel.XepLoai(n.DiemTrungBinhHe10))">
+                                                    @n.DiemTrungBinhHe10.Value.ToString("0.##")
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">—</span>
+                                            }
+                                        </td>
+                                        <td class="text-center">
+                                            @if (n.SoBaiCoDiem > 0)
+                                            {
+                                                <span class="fw-semibold text-@(n.TiLeDat >= 50 ? "success" : "danger")">@n.TiLeDat%</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">—</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@* Bảng thống kê từng sinh viên *@
+<div class="card shadow-sm">
+    <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <h5 class="mb-0"><i class="bi bi-table"></i> Chi tiết theo sinh viên (@Model.TongSinhVien)</h5>
+        <div class="d-flex flex-wrap gap-2">
+            <select id="locKhoa" class="form-select form-select-sm w-auto">
+                <option value="">-- Tất cả khoa --</option>
+                @foreach (var k in Model.TheoKhoa.Select(x => x.Ten))
+                {
+                    <option value="@k">@k</option>
+                }
+            </select>
+            <select id="locLop" class="form-select form-select-sm w-auto">
+                <option value="">-- Tất cả lớp --</option>
+                @foreach (var l in Model.TheoLop.Select(x => x.Ten))
+                {
+                    <option value="@l">@l</option>
+                }
+            </select>
+            <select id="locXepLoai" class="form-select form-select-sm w-auto">
+                <option value="">-- Tất cả xếp loại --</option>
+                @foreach (var x in KetQuaLabel.KhungDiem.Select(k => k.XepLoai))
+                {
+                    <option value="@x">@x</option>
+                }
+                <option value="Chưa chấm">Chưa có điểm</option>
+            </select>
+            <select id="locDuThi" class="form-select form-select-sm w-auto">
+                <option value="">-- Tất cả --</option>
+                <option value="dathi">Đã dự thi</option>
+                <option value="chuathi">Chưa dự thi</option>
+            </select>
+        </div>
+    </div>
+    <div class="card-body">
+        <table id="tblThongKeSinhVien" class="table table-bordered table-hover align-middle w-100">
+            <thead>
+                <tr>
+                    <th class="bg-primary text-white-50">Mã SV</th>
+                    <th class="bg-primary text-white-50">Họ tên</th>
+                    <th class="bg-primary text-white-50">Lớp</th>
+                    <th class="bg-primary text-white-50">Khoa</th>
+                    <th class="bg-primary text-white-50 text-center">Lịch thi</th>
+                    <th class="bg-primary text-white-50 text-center">Đã nộp</th>
+                    <th class="bg-primary text-white-50 text-center">Đã chấm</th>
+                    <th class="bg-primary text-white-50 text-center">Điểm TB</th>
+                    <th class="bg-primary text-white-50 text-center">Cao nhất</th>
+                    <th class="bg-primary text-white-50 text-center">Thấp nhất</th>
+                    <th class="bg-primary text-white-50 text-center">Xếp loại</th>
+                    <th class="bg-primary text-white-50 text-center">Lớp HP</th>
+                    <th class="bg-primary text-white-50 text-center"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var s in Model.SinhViens)
+                {
+                    var mauXl = KetQuaLabel.MauXepLoai(s.XepLoai);
+                    <tr data-khoa="@s.TenKhoa" data-lop="@s.MaLop" data-xep-loai="@s.XepLoai"
+                        data-du-thi="@(s.ChuaDuThi ? "chuathi" : "dathi")">
+                        <td class="fw-semibold">@s.MaSinhVien</td>
+                        <td>
+                            <a asp-action="SinhVienChiTiet" asp-route-id="@s.Id" class="text-decoration-none fw-semibold">@s.HoTen</a>
+                            <div class="small text-muted">
+                                @(s.GioiTinh ? "Nam" : "Nữ") · @s.NgaySinh.ToString("dd/MM/yyyy")
+                                @if (!s.DangHoatDong)
+                                {
+                                    <span class="badge text-bg-secondary"><i class="bi bi-lock-fill"></i> Đã khóa</span>
+                                }
+                            </div>
+                        </td>
+                        <td>
+                            @s.MaLop
+                            <div class="small text-muted">@s.TenLop</div>
+                        </td>
+                        <td>@s.TenKhoa</td>
+                        <td class="text-center">@s.SoLichThi</td>
+                        <td class="text-center">
+                            <span class="fw-semibold">@s.SoBaiDaNop</span>
+                            @if (s.SoLichThi > 0)
+                            {
+                                <div class="small text-muted">@s.TiLeNop%</div>
+                            }
+                        </td>
+                        <td class="text-center">
+                            <span class="fw-semibold">@s.SoBaiCoDiem</span>
+                            @if (s.SoBaiChuaCham > 0)
+                            {
+                                <div class="small text-danger">@s.SoBaiChuaCham chưa chấm</div>
+                            }
+                        </td>
+                        <td class="text-center" data-order="@(s.DiemTrungBinhHe10?.ToString("0.00") ?? "-1")">
+                            @if (s.DiemTrungBinhHe10.HasValue)
+                            {
+                                <span class="badge text-bg-@mauXl">@s.DiemTrungBinhHe10.Value.ToString("0.##")</span>
+                                <div class="small text-muted">@s.SoBaiDat/@s.SoBaiCoDiem đạt</div>
+                            }
+                            else
+                            {
+                                <span class="text-muted">—</span>
+                            }
+                        </td>
+                        <td class="text-center" data-order="@(s.DiemCaoNhatHe10?.ToString("0.00") ?? "-1")">
+                            @(s.DiemCaoNhatHe10?.ToString("0.##") ?? "—")
+                        </td>
+                        <td class="text-center" data-order="@(s.DiemThapNhatHe10?.ToString("0.00") ?? "-1")">
+                            @(s.DiemThapNhatHe10?.ToString("0.##") ?? "—")
+                        </td>
+                        <td class="text-center"><span class="badge text-bg-@mauXl">@s.XepLoai</span></td>
+                        <td class="text-center">@s.SoLopHocPhan</td>
+                        <td class="text-center">
+                            <a asp-action="SinhVienChiTiet" asp-route-id="@s.Id" class="btn btn-sm btn-outline-primary" title="Xem thống kê chi tiết">
+                                <i class="bi bi-bar-chart"></i> Chi tiết
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/thongke-sinhvien.js" asp-append-version="true"></script>
+}

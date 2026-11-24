@@ -1,0 +1,55 @@
+@model LichThi
+@{
+    ViewData["Title"] = "Xóa lịch thi";
+}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-sm border-danger">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0"><i class="bi bi-trash3"></i> Xóa lịch thi</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    Bạn có chắc chắn muốn xóa lịch thi này không? Thao tác này không thể hoàn tác.
+                </div>
+
+                <dl class="row">
+                    <dt class="col-sm-4">@Html.DisplayNameFor(m => m.TenLichThi)</dt>
+                    <dd class="col-sm-8">@Model.TenLichThi</dd>
+
+                    <dt class="col-sm-4">@Html.DisplayNameFor(m => m.DeThi)</dt>
+                    <dd class="col-sm-8">
+                        @Model.DeThi?.MaDeThi - @Model.DeThi?.TenDeThi (@Model.DeThi?.MonHoc?.TenMonHoc)
+                    </dd>
+
+                    <dt class="col-sm-4">@Html.DisplayNameFor(m => m.ThoiGianBatDau)</dt>
+                    <dd class="col-sm-8">@Model.ThoiGianBatDau.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
+
+                    <dt class="col-sm-4">@Html.DisplayNameFor(m => m.ThoiGianKetThuc)</dt>
+                    <dd class="col-sm-8">@Model.ThoiGianKetThuc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
+
+                    <dt class="col-sm-4">@Html.DisplayNameFor(m => m.GhiChu)</dt>
+                    <dd class="col-sm-8">@Model.GhiChu</dd>
+
+                    <dt class="col-sm-4">@Html.DisplayNameFor(m => m.LichThiLops)</dt>
+                    <dd class="col-sm-8">
+                        @string.Join(", ", Model.LichThiLops.Select(x => x.Lop?.TenLop).OrderBy(x => x))
+                    </dd>
+                </dl>
+
+                <form asp-action="DeleteConfirm" method="post">
+                    <input type="hidden" asp-for="Id" />
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash3"></i> Xóa
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Hủy
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

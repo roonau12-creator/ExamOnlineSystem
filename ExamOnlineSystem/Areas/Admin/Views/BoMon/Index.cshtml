@@ -1,0 +1,39 @@
+@model List<BoMon>
+@{
+    ViewData["Title"] = "Quản lý danh sách bộ môn";
+}
+<div class="text-center text-black-50">
+    <h3>Quản lý danh sách bộ môn</h3>
+</div>
+<div class="text-end mb-3">
+    <a asp-action="Import" class="btn btn-outline-success"><i class="bi bi-file-earmark-excel"></i>Nhập từ Excel</a>
+    <a asp-action="Create" class="btn btn-outline-danger"><i class="bi bi-plus-circle"></i>Thêm bộ môn</a>
+</div>
+@* Bộ lọc: lọc trực tiếp trên bảng (bomon.js) *@
+<div class="row g-2 mb-3">
+    <div class="col-sm-6 col-md-4">
+        <select id="locKhoa" class="form-select" asp-items="ViewBag.KhoaList">
+            <option value="">-- Tất cả khoa --</option>
+        </select>
+    </div>
+</div>
+
+<table id="tblBoMon" class="table table-bordered table-hover w-100">
+    <thead>
+        <tr>
+            <th class="bg-primary text-white-50">Mã bộ môn</th>
+            <th class="bg-primary text-white-50">Tên bộ môn</th>
+            <th class="bg-primary text-white-50">Khoa</th>
+            <th class="bg-primary text-white-50">Số thứ tự</th>
+            <th class="bg-primary text-white-50">Chức năng</th>
+        </tr>
+    </thead>
+</table>
+
+<form id="deleteForm" method="post">
+    @Html.AntiForgeryToken()
+</form>
+
+@section Scripts {
+    <script src="~/js/bomon.js" asp-append-version="true"></script>
+}

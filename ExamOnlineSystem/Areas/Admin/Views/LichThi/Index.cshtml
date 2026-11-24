@@ -1,0 +1,72 @@
+@{
+    ViewData["Title"] = "Danh sách lịch thi";
+}
+<div class="text-center text-black-50">
+    <h3>Danh sách lịch thi</h3>
+</div>
+
+<div class="text-end mb-3">
+    <a asp-action="Create" class="btn btn-outline-danger"><i class="bi bi-calendar-plus"></i> Tạo lịch thi</a>
+</div>
+
+@* Thống kê nhanh theo trạng thái (lichthi.js điền) *@
+<div class="row g-3 mb-3" id="thongKe">
+    <div class="col-sm-4">
+        <div class="card border-info h-100"><div class="card-body py-2">
+            <div class="text-muted small">Sắp diễn ra</div><div class="fs-4 fw-bold text-info" data-tk="Sắp diễn ra">0</div>
+        </div></div>
+    </div>
+    <div class="col-sm-4">
+        <div class="card border-success h-100"><div class="card-body py-2">
+            <div class="text-muted small">Đang diễn ra</div><div class="fs-4 fw-bold text-success" data-tk="Đang diễn ra">0</div>
+        </div></div>
+    </div>
+    <div class="col-sm-4">
+        <div class="card border-secondary h-100"><div class="card-body py-2">
+            <div class="text-muted small">Đã kết thúc</div><div class="fs-4 fw-bold text-secondary" data-tk="Đã kết thúc">0</div>
+        </div></div>
+    </div>
+</div>
+
+@* Bộ lọc nhanh: lọc trực tiếp trên bảng (lichthi.js) *@
+<div class="row g-2 mb-3">
+    <div class="col-sm-6 col-md-3">
+        <select id="locTrangThai" class="form-select">
+            <option value="">-- Tất cả trạng thái --</option>
+            <option>Sắp diễn ra</option>
+            <option>Đang diễn ra</option>
+            <option>Đã kết thúc</option>
+        </select>
+    </div>
+    <div class="col-sm-6 col-md-3">
+        <select id="locMonHoc" class="form-select">
+            <option value="">-- Tất cả môn học --</option>
+        </select>
+    </div>
+    <div class="col-sm-6 col-md-3">
+        <select id="locLop" class="form-select">
+            <option value="">-- Tất cả lớp --</option>
+        </select>
+    </div>
+</div>
+
+<table id="tblLichThi" class="table table-bordered table-hover w-100">
+    <thead>
+        <tr>
+            <th class="bg-primary text-white-50">Lịch thi</th>
+            <th class="bg-primary text-white-50">Đề thi</th>
+            <th class="bg-primary text-white-50">Môn học</th>
+            <th class="bg-primary text-white-50">Thời gian</th>
+            <th class="bg-primary text-white-50 text-center">Làm bài</th>
+            <th class="bg-primary text-white-50">Lớp</th>
+            <th class="bg-primary text-white-50 text-center">Số SV</th>
+            <th class="bg-primary text-white-50 text-center">Trạng thái</th>
+            <th class="bg-primary text-white-50">Giảng viên</th>
+            <th class="bg-primary text-white-50">Chức năng</th>
+        </tr>
+    </thead>
+</table>
+
+@section Scripts {
+    <script src="~/js/lichthi.js" asp-append-version="true"></script>
+}

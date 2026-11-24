@@ -1,0 +1,38 @@
+@model HocPhan
+@* Các trường nhập liệu dùng chung cho Thêm / Sửa học phần *@
+<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+<div class="mb-3">
+    <label asp-for="KhoaId" class="form-label"></label>
+    <select asp-for="KhoaId" asp-items='ViewData["KhoaList"] as SelectList' class="form-select"
+            data-monhoc-url="@Url.Action("GetMonHocByKhoa")">
+        <option value="">-- Chọn khoa --</option>
+    </select>
+    <span asp-validation-for="KhoaId" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="MonHocId" class="form-label"></label>
+    <select asp-for="MonHocId" asp-items='ViewData["MonHocList"] as SelectList' class="form-select">
+        <option value="">-- Chọn môn học --</option>
+    </select>
+    <span asp-validation-for="MonHocId" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="MaHocPhan" class="form-label"></label>
+    <input asp-for="MaHocPhan" class="form-control" placeholder="Nhập mã học phần" />
+    <span asp-validation-for="MaHocPhan" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="TenHocPhan" class="form-label"></label>
+    <input asp-for="TenHocPhan" class="form-control" placeholder="Nhập tên học phần" />
+    <span asp-validation-for="TenHocPhan" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="SoTinChi" class="form-label"></label>
+    <input asp-for="SoTinChi" type="number" min="1" max="20" class="form-control" placeholder="Ví dụ: 3" />
+    <span asp-validation-for="SoTinChi" class="text-danger"></span>
+</div>

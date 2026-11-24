@@ -1,0 +1,69 @@
+@{
+    ViewData["Title"] = "Nhập đáp án từ Excel";
+    var errors = ViewBag.Errors as List<string>;
+}
+<div class="row justify-content-center">
+    <div class="col-lg-9 col-xl-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0"><i class="bi bi-file-earmark-excel"></i> Nhập đáp án từ Excel</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info small">
+                    File <strong>.xlsx</strong>, dòng 1 là tiêu đề, mỗi dòng từ dòng 2 là <strong>một đáp án</strong>:
+                    <table class="table table-sm table-bordered bg-white my-2">
+                        <tbody>
+                            <tr><th>Mã câu hỏi</th><td>Số hiệu câu hỏi trắc nghiệm, vd: <code>9</code> hoặc <code>#9</code> (xem sheet <em>DanhSachCauHoi</em> trong file mẫu)</td></tr>
+                            <tr><th>Nội dung đáp án</th><td>Bắt buộc</td></tr>
+                            <tr><th>Đáp án đúng</th><td><code>x</code> / <code>Đúng</code> = đáp án đúng; để trống / <code>Sai</code> = đáp án sai</td></tr>
+                        </tbody>
+                    </table>
+                    <ul class="mb-2">
+                        <li>Đáp án được <strong>thêm vào cuối</strong> các đáp án hiện có của câu hỏi (theo thứ tự các dòng trong file).</li>
+                        <li>Đáp án đã có (cùng câu hỏi, cùng nội dung) sẽ được bỏ qua, nên có thể nhập lại cùng một file.</li>
+                        <li>Sau khi nhập, mỗi câu hỏi phải có 2–10 đáp án và ít nhất 1 đáp án đúng.</li>
+                        <li>Giảng viên chỉ nhập được đáp án cho câu hỏi do mình tạo.</li>
+                    </ul>
+                    <a asp-action="DownloadTemplate" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-download"></i> Tải file mẫu (kèm danh sách câu hỏi và đáp án hiện có)
+                    </a>
+                </div>
+
+                @if (errors != null && errors.Count > 0)
+                {
+                    <div class="alert alert-danger">
+                        <strong>File có @errors.Count lỗi, chưa nhập đáp án nào:</strong>
+                        <ul class="mb-0">
+                            @foreach (var e in errors.Take(100))
+                            {
+                                <li>@e</li>
+                            }
+                            @if (errors.Count > 100)
+                            {
+                                <li>… và @(errors.Count - 100) lỗi khác</li>
+                            }
+                        </ul>
+                    </div>
+                }
+
+                <form asp-action="Import" method="post" enctype="multipart/form-data">
+                    <div asp-validation-summary="All" class="text-danger"></div>
+
+                    <div class="mb-3">
+                        <label for="file" class="form-label">Chọn file Excel</label>
+                        <input type="file" id="file" name="file" class="form-control" accept=".xlsx" required />
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-upload"></i> Nhập
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Hủy
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

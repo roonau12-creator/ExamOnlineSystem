@@ -1,0 +1,58 @@
+@{
+    ViewData["Title"] = "Nhập học phần từ Excel";
+    var errors = ViewBag.Errors as List<string>;
+}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0"><i class="bi bi-file-earmark-excel"></i> Nhập học phần từ Excel</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info small">
+                    File <strong>.xlsx</strong>, dòng 1 là tiêu đề, dữ liệu từ dòng 2:
+                    cột A = <strong>Mã học phần</strong>, cột B = <strong>Tên học phần</strong>,
+                    cột C = <strong>Mã môn học</strong> (phải có sẵn; khoa được lấy theo môn học),
+                    cột D = <strong>Số tín chỉ</strong> (1–20).
+                    Mã học phần đã tồn tại sẽ được cập nhật, chưa có sẽ được thêm mới.
+                    <div class="mt-2">
+                        <a asp-action="DownloadTemplate" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-download"></i> Tải file mẫu (kèm danh sách mã môn học)
+                        </a>
+                    </div>
+                </div>
+
+                @if (errors != null && errors.Count > 0)
+                {
+                    <div class="alert alert-danger">
+                        <strong>File có lỗi, chưa nhập dữ liệu nào:</strong>
+                        <ul class="mb-0">
+                            @foreach (var e in errors)
+                            {
+                                <li>@e</li>
+                            }
+                        </ul>
+                    </div>
+                }
+
+                <form asp-action="Import" method="post" enctype="multipart/form-data">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                    <div class="mb-3">
+                        <label for="file" class="form-label">Chọn file Excel</label>
+                        <input type="file" id="file" name="file" class="form-control" accept=".xlsx" required />
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-upload"></i> Nhập
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Hủy
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

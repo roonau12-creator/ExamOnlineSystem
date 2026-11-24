@@ -1,0 +1,88 @@
+@model ExamOnlineSystem.Models.ViewModels.UserCreateVM
+@{
+    ViewData["Title"] = "Thêm tài khoản";
+}
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-xl-7">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="bi bi-person-plus"></i> Thêm tài khoản</h4>
+            </div>
+            <div class="card-body">
+                <form asp-action="Create" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                    <h6 class="text-uppercase text-muted small fw-bold mb-3">Thông tin người dùng</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-7">
+                            <label asp-for="HoTen" class="form-label"></label>
+                            <input asp-for="HoTen" class="form-control" placeholder="Ví dụ: Nguyễn Văn An" />
+                            <span asp-validation-for="HoTen" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-5">
+                            <label asp-for="SoDienThoai" class="form-label"></label>
+                            <input asp-for="SoDienThoai" class="form-control" placeholder="0901234567" />
+                            <div class="form-text">Không bắt buộc.</div>
+                            <span asp-validation-for="SoDienThoai" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="ChucDanh" class="form-label"></label>
+                            <input asp-for="ChucDanh" class="form-control" placeholder="Ví dụ: Trưởng bộ môn" />
+                            <div class="form-text">Để trống sẽ lấy theo vai trò.</div>
+                            <span asp-validation-for="ChucDanh" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="KhoaId" class="form-label"></label>
+                            <select asp-for="KhoaId" asp-items='ViewData["KhoaSelect"] as List<SelectListItem>' class="form-select">
+                                <option value="0">-- Không gắn khoa --</option>
+                            </select>
+                            <span asp-validation-for="KhoaId" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <h6 class="text-uppercase text-muted small fw-bold mb-3">Tài khoản đăng nhập</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-7">
+                            <label asp-for="Email" class="form-label"></label>
+                            <input asp-for="Email" type="email" class="form-control" placeholder="giangvien@example.vn" />
+                            <div class="form-text">Email cũng là tên đăng nhập.</div>
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-5">
+                            <label asp-for="MatKhau" class="form-label"></label>
+                            <input asp-for="MatKhau" class="form-control" autocomplete="new-password" />
+                            <div class="form-text">Ít nhất 6 ký tự, có chữ số.</div>
+                            <span asp-validation-for="MatKhau" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-7">
+                            <label asp-for="VaiTro" class="form-label"></label>
+                            <select asp-for="VaiTro" asp-items='ViewData["VaiTroSelect"] as List<SelectListItem>' class="form-select">
+                                <option value="">-- Chọn vai trò --</option>
+                            </select>
+                            <span asp-validation-for="VaiTro" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-light border small">
+                        <i class="bi bi-info-circle"></i>
+                        Trang này chỉ tạo tài khoản đăng nhập. Hồ sơ sinh viên (mã SV, lớp, ngày sinh) hoặc
+                        hồ sơ giảng viên (mã GV, bộ môn) được thêm ở trang Sinh viên / Giảng viên.
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Thêm
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Hủy
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

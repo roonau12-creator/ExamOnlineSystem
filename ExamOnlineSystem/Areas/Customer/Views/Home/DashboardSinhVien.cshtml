@@ -1,0 +1,213 @@
+@using ExamOnlineSystem.Models.ViewModels
+@model SinhVienDetailVM?
+@{
+    ViewData["Title"] = "Trang chủ sinh viên";
+    var now = DateTime.UtcNow;
+
+    // "còn 2 ngày", "còn 3 giờ 15 phút"... cho lịch thi sắp tới / đang diễn ra
+    string ConLai(DateTime moc)
+    {
+        var tg = moc - now;
+        if (tg.TotalDays >= 1) return $"còn {(int)tg.TotalDays} ngày {tg.Hours} giờ";
+        if (tg.TotalHours >= 1) return $"còn {(int)tg.TotalHours} giờ {tg.Minutes} phút";
+        return $"còn {Math.Max(1, (int)Math.Ceiling(tg.TotalMinutes))} phút";
+    }
+}
+
+@if (Model == null)
+{
+    <div class="container-xl py-4">
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle"></i> Tài khoản của bạn chưa được gắn với hồ sơ sinh viên nào.
+            Vui lòng liên hệ phòng đào tạo.
+        </div>
+    </div>
+    return;
+}
+
+@{
+    var sv = Model.SinhVien;
+    // Đang diễn ra: trong khung giờ thi và chưa nộp bài
+    var dangDienRa = Model.LichThis
+        .Where(l => l.ThoiGianBatDau <= now && now < l.ThoiGianKetThuc && l.TrangThai != 2)
+        .OrderBy(l => l.ThoiGianKetThuc).ToList();
+    var sapToi = Model.LichThis.Where(l => l.ThoiGianBatDau > now).OrderBy(l => l.ThoiGianBatDau).ToList();
+    var coDiem = Model.LichThis.Where(l => l.DiemHe10.HasValue).OrderBy(l => l.ThoiGianBatDau).ToList();
+    var lhpNamNay = Model.LopHocPhans.Where(l => l.LaNamHienTai).ToList();
+    var diemTB = coDiem.Count > 0 ? coDiem.Average(l => l.DiemHe10!.Value) : (double?)null;
+    var ketQuaGanDay = coDiem.TakeLast(8).ToList();
+}
+
+@* Layout công khai không bọc nội dung trong container -> tự bọc để có lề, không tràn ngang *@
+<div class="container-xl py-4">
+
+@* ===== Lời chào ===== *@
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-4">
+    <div>
+        <h3 class="mb-1">Xin chào, @sv.HoTen</h3>
+        <div class="text-muted small">
+            Mã SV: @sv.MaSinhVien · Lớp: @(sv.Lop?.MaLop ?? "—") · @(sv.Khoa?.TenKhoa ?? "")
+        </div>
+    </div>
+    <div class="text-muted small"><i class="bi bi-calendar3"></i> @DateTime.Now.ToString("dddd, dd/MM/yyyy", new System.Globalization.CultureInfo("vi-VN"))</div>
+</div>
+
+@* ===== Bài thi đang diễn ra ===== *@
+@foreach (var lt in dangDienRa)
+{
+    <div class="alert alert-warning d-flex flex-wrap align-items-center gap-2" role="alert">
+        <i class="bi bi-alarm fs-4"></i>
+        <div class="flex-grow-1">
+            <strong>Đang diễn ra:</strong> <a asp-controller="LichThi" asp-action="ChiTiet" asp-route-id="@lt.LichThiId" class="alert-link">@lt.TenLichThi</a>
+            <div class="small">Kết thúc lúc @lt.ThoiGianKetThuc.ToLocalTime().ToString("HH:mm") (@ConLai(lt.ThoiGianKetThuc))</div>
+        </div>
+        <span class="badge text-bg-dark">@KetQuaLabel.TenTrangThai(lt.TrangThai)</span>
+        <a asp-controller="LichThi" asp-action="XacNhan" asp-route-id="@lt.LichThiId" class="btn btn-sm btn-success"><i class="bi bi-box-arrow-in-right"></i> Vào thi</a>
+    </div>
+}
+
+@* ===== Chỉ số chính ===== *@
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="card border-primary h-100"><div class="card-body py-3">
+            <div class="text-muted small"><i class="bi bi-calendar-event"></i> Lịch thi sắp tới</div>
+            <div class="fs-3 fw-bold">@sapToi.Count</div>
+            <div class="small text-muted">@(sapToi.Count > 0 ? "Gần nhất " + sapToi[0].ThoiGianBatDau.ToLocalTime().ToString("dd/MM HH:mm") : "Chưa có lịch mới")</div>
+        </div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card border-primary h-100"><div class="card-body py-3">
+            <div class="text-muted small"><i class="bi bi-check2-circle"></i> Bài thi đã có điểm</div>
+            <div class="fs-3 fw-bold">@coDiem.Count<span class="fs-6 text-muted fw-normal"> / @Model.LichThis.Count</span></div>
+            <div class="small text-muted">@Model.LanThis.Count lượt làm bài</div>
+        </div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card border-primary h-100"><div class="card-body py-3">
+            <div class="text-muted small"><i class="bi bi-graph-up"></i> Điểm trung bình</div>
+            <div class="fs-3 fw-bold">@(diemTB?.ToString("0.00") ?? "—")<span class="fs-6 text-muted fw-normal"> / 10</span></div>
+            <div class="small text-muted">@(diemTB.HasValue ? KetQuaLabel.XepLoai(diemTB) : "Chưa có điểm")</div>
+        </div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card border-primary h-100"><div class="card-body py-3">
+            <div class="text-muted small"><i class="bi bi-journal-text"></i> Lớp học phần năm nay</div>
+            <div class="fs-3 fw-bold">@lhpNamNay.Count</div>
+            <div class="small text-muted">@lhpNamNay.Sum(l => l.SoTinChi) tín chỉ</div>
+        </div></div>
+    </div>
+</div>
+
+<div class="row g-3">
+    @* ===== Lịch thi sắp tới ===== *@
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-calendar-event"></i> Lịch thi sắp tới</h5>
+                <a asp-controller="LichThi" asp-action="Index" class="small">Xem tất cả <i class="bi bi-arrow-right"></i></a>
+            </div>
+            <div class="list-group list-group-flush">
+                @if (sapToi.Count == 0)
+                {
+                    <div class="list-group-item text-muted"><i class="bi bi-info-circle"></i> Bạn chưa có lịch thi sắp tới.</div>
+                }
+                @foreach (var lt in sapToi.Take(5))
+                {
+                    var bd = lt.ThoiGianBatDau.ToLocalTime();
+                    <div class="list-group-item d-flex gap-3 align-items-center">
+                        <div class="text-center border rounded px-2 py-1" style="min-width:58px">
+                            <div class="small text-muted text-uppercase" style="font-size:11px">Th @bd.Month</div>
+                            <div class="fs-5 fw-bold lh-1">@bd.Day.ToString("00")</div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <a asp-controller="LichThi" asp-action="ChiTiet" asp-route-id="@lt.LichThiId" class="fw-semibold text-decoration-none">@lt.TenLichThi</a>
+                            <div class="small text-muted">
+                                @bd.ToString("HH:mm") – @lt.ThoiGianKetThuc.ToLocalTime().ToString("HH:mm") · @lt.TenDeThi
+                            </div>
+                        </div>
+                        <span class="badge text-bg-light border text-nowrap">@ConLai(lt.ThoiGianBatDau)</span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    @* ===== Điểm các bài thi gần đây (thang 10) ===== *@
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Điểm các bài thi gần đây</h5>
+                <a asp-controller="KetQuaThi" asp-action="Index" class="small">Xem tất cả <i class="bi bi-arrow-right"></i></a>
+            </div>
+            <div class="card-body">
+                @if (ketQuaGanDay.Count == 0)
+                {
+                    <p class="text-muted mb-0"><i class="bi bi-info-circle"></i> Chưa có bài thi nào có điểm.</p>
+                }
+                else
+                {
+                    @* Một chuỗi số liệu -> một màu; con số dùng màu chữ, không dùng màu cột *@
+                    <ul class="list-unstyled mb-0 bieu-do-diem" aria-label="Điểm thang 10 của các bài thi gần đây">
+                        @foreach (var lt in ketQuaGanDay)
+                        {
+                            var d = lt.DiemHe10!.Value;
+                            var tip = $"{lt.TenLichThi}: {lt.Diem:0.##}/{lt.TongDiem:0.##} điểm ({d:0.00}/10, {KetQuaLabel.XepLoai(d)})";
+                            <li class="dong-diem" title="@tip">
+                                <div class="d-flex justify-content-between small mb-1 gap-2">
+                                    <span class="text-truncate">@lt.TenLichThi</span>
+                                    <span class="fw-semibold text-nowrap">@d.ToString("0.00")</span>
+                                </div>
+                                <div class="ray-diem" role="img" aria-label="@tip">
+                                    <div class="cot-diem" style="width:@((d * 10).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture))%"></div>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                    <div class="d-flex justify-content-between small text-muted mt-2"><span>0</span><span>5</span><span>10</span></div>
+                }
+            </div>
+        </div>
+    </div>
+
+    @* ===== Lớp học phần đang học ===== *@
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-journal-text"></i> Lớp học phần đang học</h5>
+            </div>
+            <div class="card-body">
+                @if (lhpNamNay.Count == 0)
+                {
+                    <p class="text-muted mb-0"><i class="bi bi-info-circle"></i> Bạn chưa có lớp học phần nào trong năm học hiện tại.</p>
+                }
+                else
+                {
+                    <div class="row g-2">
+                        @foreach (var l in lhpNamNay)
+                        {
+                            <div class="col-md-6 col-xl-4">
+                                <div class="border rounded p-2 h-100">
+                                    <div class="fw-semibold">@l.TenHocPhan</div>
+                                    <div class="small text-muted">
+                                        @l.MaLopHocPhan · @l.SoTinChi TC · @ExamOnlineSystem.Utility.LopHocPhanLabel.TenHocKy(l.HocKy)
+                                    </div>
+                                    <div class="small"><i class="bi bi-person-badge"></i> @(l.GiaoVienPhuTrach ?? "Chưa phân công giảng viên")</div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+</div>
+
+<style>
+    /* Thanh điểm: rãnh nhạt, cột mảnh bo 4px, một màu (primary) */
+    .bieu-do-diem .dong-diem + .dong-diem { margin-top: .75rem; }
+    .bieu-do-diem .ray-diem { height: 8px; border-radius: 4px; background: var(--bs-secondary-bg); }
+    .bieu-do-diem .cot-diem { height: 100%; min-width: 4px; border-radius: 4px; background: var(--bs-primary); }
+    .bieu-do-diem .dong-diem:hover .cot-diem { filter: brightness(.85); }
+</style>

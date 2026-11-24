@@ -1,0 +1,193 @@
+@using ExamOnlineSystem.Models.ViewModels
+@using ExamOnlineSystem.Utility
+@model CauHoiDetailVM
+@{
+    ViewData["Title"] = "Chi tiết câu hỏi #" + Model.CauHoi.Id;
+    var ch = Model.CauHoi;
+    var tracNghiem = ch.LoaiCauHoi == 1;
+    var mauMucDo = ch.MucDo switch { 1 => "success", 2 => "info", 3 => "warning", 4 => "danger", _ => "secondary" };
+    // Câu nằm trong đề đã phát hành bị khóa chỉnh sửa (câu hỏi và đáp án)
+    var deKhoa = Model.CauHoiDeThis.Where(c => c.DeThi != null && c.DeThi.DaPhatHanh).Select(c => c.DeThi!.MaDeThi).Distinct().ToList();
+    var duocSua = Model.CoQuyenSua && deKhoa.Count == 0;
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h3 class="text-black-50 mb-0">Chi tiết câu hỏi</h3>
+    <div class="d-flex gap-2">
+        @if (duocSua)
+        {
+            <a asp-action="Edit" asp-route-id="@ch.Id" class="btn btn-primary"><i class="bi bi-pencil-square"></i> Sửa</a>
+        }
+        <a asp-action="Index" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Quay lại danh sách</a>
+    </div>
+</div>
+
+@* Môn học › danh mục gốc › ... › danh mục chứa câu hỏi *@
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">@(string.IsNullOrEmpty(Model.TenMonHoc) ? "—" : Model.TenMonHoc)</li>
+        @foreach (var dm in Model.DuongDanDanhMuc)
+        {
+            <li class="breadcrumb-item">
+                <a asp-controller="DanhMucCauHoi" asp-action="Details" asp-route-id="@dm.Id">@dm.TenDanhMuc</a>
+            </li>
+        }
+    </ol>
+</nav>
+
+@if (deKhoa.Count > 0)
+{
+    <div class="alert alert-secondary">
+        <i class="bi bi-lock-fill"></i>
+        Câu hỏi đang nằm trong đề đã phát hành (<strong>@string.Join(", ", deKhoa)</strong>) nên câu hỏi và đáp án bị khóa chỉnh sửa.
+        Hủy phát hành các đề này nếu cần sửa.
+    </div>
+}
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white d-flex flex-wrap align-items-center gap-2">
+        <h5 class="mb-0 me-auto"><i class="bi bi-question-circle"></i> Câu hỏi #@ch.Id</h5>
+        <span class="badge text-bg-light">@CauHoiLabel.TenLoaiCauHoi(ch.LoaiCauHoi)</span>
+        <span class="badge text-bg-@mauMucDo">@CauHoiLabel.TenMucDo(ch.MucDo)</span>
+        <span class="badge text-bg-light">@ch.DiemMacDinh điểm</span>
+    </div>
+    <div class="card-body">
+        @* pre-line: giữ xuống dòng của nội dung nhập *@
+        <p class="fs-5 mb-3" style="white-space: pre-line">@ch.NoiDung</p>
+
+        @if (ch.HinhAnh != null)
+        {
+            var urlAnh = Url.Action("HinhAnh", new { id = ch.Id, v = ch.HinhAnh });
+            <div class="mb-4">
+                <a href="@urlAnh" target="_blank" title="Xem ảnh kích thước đầy đủ">
+                    <img src="@urlAnh" alt="Ảnh minh họa câu hỏi" class="img-fluid img-thumbnail" style="max-height: 400px" />
+                </a>
+            </div>
+        }
+
+        @if (tracNghiem)
+        {
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="text-muted mb-0">Đáp án</h6>
+                @if (duocSua && Model.DapAns.Count < ExamOnlineSystem.Models.ViewModels.DapAnFormVM.SoDapAnToiDa)
+                {
+                    <a asp-controller="DapAn" asp-action="Create" asp-route-cauHoiId="@ch.Id" class="btn btn-sm btn-outline-success">
+                        <i class="bi bi-plus-lg"></i> Thêm đáp án
+                    </a>
+                }
+            </div>
+            @if (Model.DapAns.Count == 0)
+            {
+                <p class="text-muted"><i class="bi bi-info-circle"></i> Câu hỏi chưa có đáp án.</p>
+            }
+            else
+            {
+                <ul class="list-group mb-4">
+                    @for (var i = 0; i < Model.DapAns.Count; i++)
+                    {
+                        var da = Model.DapAns[i];
+                        <li class="list-group-item d-flex align-items-center gap-2 @(da.DapAnDung ? "list-group-item-success" : "")">
+                            <span class="badge rounded-pill @(da.DapAnDung ? "text-bg-success" : "text-bg-secondary")">@((char)('A' + i))</span>
+                            <span class="me-auto">@da.NoiDung</span>
+                            @if (da.DapAnDung)
+                            {
+                                <span class="text-success fw-semibold text-nowrap"><i class="bi bi-check-circle-fill"></i> Đúng</span>
+                            }
+                            @if (duocSua)
+                            {
+                                <a asp-controller="DapAn" asp-action="Edit" asp-route-id="@da.Id"
+                                   class="btn btn-sm btn-link p-0 ms-2" title="Sửa đáp án @((char)('A' + i))">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+                                <button type="button" class="btn btn-sm btn-link text-danger p-0 ms-2 btn-xoa-dap-an-ajax"
+                                        data-url="@Url.Action("DeleteDapAn", "DapAn", new { id = da.Id })"
+                                        data-name="@((char)('A' + i)). @(da.NoiDung.Length > 60 ? da.NoiDung[..60] + "…" : da.NoiDung)"
+                                        title="Xóa đáp án @((char)('A' + i))">
+                                    <i class="bi bi-trash3"></i>
+                                </button>
+                            }
+                        </li>
+                    }
+                </ul>
+            }
+        }
+
+        <h6 class="text-muted">@(tracNghiem ? "Giải thích" : "Giải thích / đáp án gợi ý")</h6>
+        @if (string.IsNullOrWhiteSpace(ch.GiaiThich))
+        {
+            <p class="text-muted mb-4">—</p>
+        }
+        else
+        {
+            <div class="border rounded bg-light p-3 mb-4" style="white-space: pre-line">@ch.GiaiThich</div>
+        }
+
+        <dl class="row mb-0">
+            <dt class="col-sm-3">Giảng viên</dt>
+            <dd class="col-sm-9">@(ch.GiaoVien == null ? "—" : $"{ch.GiaoVien.HoTen} ({ch.GiaoVien.MaGiaoVien})")</dd>
+
+            <dt class="col-sm-3">Môn học</dt>
+            <dd class="col-sm-9 mb-0">@(string.IsNullOrEmpty(Model.TenMonHoc) ? "—" : Model.TenMonHoc)</dd>
+        </dl>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white">
+        <h5 class="mb-0">Đề thi đang dùng câu hỏi</h5>
+    </div>
+    <div class="card-body">
+        @if (Model.CauHoiDeThis.Count == 0)
+        {
+            <p class="text-muted mb-0"><i class="bi bi-info-circle"></i> Câu hỏi chưa được dùng trong đề thi nào.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th class="bg-primary text-white-50 text-center">STT</th>
+                            <th class="bg-primary text-white-50">Mã đề thi</th>
+                            <th class="bg-primary text-white-50">Tên đề thi</th>
+                            <th class="bg-primary text-white-50 text-center">Câu số</th>
+                            <th class="bg-primary text-white-50 text-center">Điểm trong đề</th>
+                            <th class="bg-primary text-white-50 text-center">Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (var i = 0; i < Model.CauHoiDeThis.Count; i++)
+                        {
+                            var chdt = Model.CauHoiDeThis[i];
+                            <tr>
+                                <td class="text-center">@(i + 1)</td>
+                                <td><a asp-controller="DeThi" asp-action="Details" asp-route-id="@chdt.DeThiId">@chdt.DeThi?.MaDeThi</a></td>
+                                <td>@chdt.DeThi?.TenDeThi</td>
+                                <td class="text-center">@chdt.ThuTu</td>
+                                <td class="text-center">@chdt.Diem</td>
+                                <td class="text-center">
+                                    @if (chdt.DeThi?.DaPhatHanh == true)
+                                    {
+                                        <span class="badge text-bg-success">Đã phát hành</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge text-bg-light text-secondary border">Nháp</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+<form id="deleteForm" method="post">
+    @Html.AntiForgeryToken()
+</form>
+
+@section Scripts {
+    <script src="~/js/dapan-xoa.js" asp-append-version="true"></script>
+}

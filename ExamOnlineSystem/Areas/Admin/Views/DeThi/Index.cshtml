@@ -1,0 +1,75 @@
+@{
+    ViewData["Title"] = "Quản lý đề thi";
+}
+<div class="text-center text-black-50">
+    <h3>Quản lý đề thi</h3>
+</div>
+
+@* Cảnh báo đề lệch tổng điểm (dethi.js điền sau khi tải dữ liệu) *@
+<div id="canhBaoDiem" class="alert alert-warning py-2 d-none">
+    <i class="bi bi-exclamation-triangle"></i> <span></span>
+    <a asp-action="KiemTraTongDiem" class="alert-link ms-1">Kiểm tra tổng điểm →</a>
+</div>
+
+<div class="text-end mb-3">
+    <a asp-action="KiemTraTongDiem" class="btn btn-outline-secondary"><i class="bi bi-clipboard-check"></i>Kiểm tra tổng điểm</a>
+    <a asp-action="Import" class="btn btn-outline-success"><i class="bi bi-file-earmark-excel"></i>Nhập từ Excel</a>
+    <a asp-action="Create" class="btn btn-outline-danger"><i class="bi bi-plus-circle"></i>Thêm đề thi</a>
+</div>
+
+@* Bộ lọc nhanh: lọc trực tiếp trên bảng (dethi.js) *@
+<div class="row g-2 mb-3">
+    <div class="col-sm-6 col-md-3">
+        <select id="locMonHoc" class="form-select">
+            <option value="">-- Tất cả môn học --</option>
+        </select>
+    </div>
+    <div class="col-sm-6 col-md-3">
+        <select id="locLoai" class="form-select">
+            <option value="">-- Tất cả loại đề --</option>
+            <option>Trắc nghiệm</option>
+            <option>Tự luận</option>
+            <option>Kết hợp</option>
+        </select>
+    </div>
+    <div class="col-sm-6 col-md-3">
+        <select id="locTrangThai" class="form-select">
+            <option value="">-- Tất cả trạng thái --</option>
+            <option>Đã phát hành</option>
+            <option>Nháp</option>
+        </select>
+    </div>
+    <div class="col-sm-6 col-md-3">
+        <select id="locDiem" class="form-select">
+            <option value="">-- Tổng điểm: tất cả --</option>
+            <option value="Khớp">Khớp tổng điểm</option>
+            <option value="Lệch">Lệch tổng điểm</option>
+            <option value="Chưa có câu">Chưa có câu hỏi</option>
+        </select>
+    </div>
+</div>
+
+<table id="tblDeThi" class="table table-bordered table-hover w-100">
+    <thead>
+        <tr>
+            <th class="bg-primary text-white-50">Mã đề</th>
+            <th class="bg-primary text-white-50">Tên đề thi</th>
+            <th class="bg-primary text-white-50">Môn học</th>
+            <th class="bg-primary text-white-50">Loại đề</th>
+            <th class="bg-primary text-white-50">Thời lượng</th>
+            <th class="bg-primary text-white-50">Số câu</th>
+            <th class="bg-primary text-white-50">Điểm</th>
+            <th class="bg-primary text-white-50">Trạng thái</th>
+            <th class="bg-primary text-white-50">Giảng viên</th>
+            <th class="bg-primary text-white-50">Chức năng</th>
+        </tr>
+    </thead>
+</table>
+
+<form id="deleteForm" method="post">
+    @Html.AntiForgeryToken()
+</form>
+
+@section Scripts {
+    <script src="~/js/dethi.js" asp-append-version="true"></script>
+}

@@ -1,0 +1,22 @@
+# Build output
+bin/
+obj/
+*.user
+*.suo
+
+# IDE
+.idea/
+.vs/
+.vscode/
+
+# Ảnh minh họa câu hỏi người dùng tải lên (dữ liệu chạy, không phải mã nguồn)
+ExamOnlineSystem/App_Data/
+
+# Log / tạm
+*.log
+*.tmp
+.DS_Store
+
+# Cấu hình cục bộ (chứa connection string / mật khẩu) - dùng appsettings.example.json làm mẫu
+ExamOnlineSystem/appsettings.json
+ExamOnlineSystem/appsettings.Development.json

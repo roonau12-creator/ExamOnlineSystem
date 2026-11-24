@@ -1,0 +1,88 @@
+@{
+    ViewData["Title"] = "Nhập câu hỏi từ Excel";
+    var errors = ViewBag.Errors as List<string>;
+    var giaoVienHienTai = ViewData["GiaoVienHienTai"] as GiaoVien;
+    var giaoVienList = ViewData["GiaoVienList"] as SelectList;
+}
+<div class="row justify-content-center">
+    <div class="col-lg-10 col-xl-9">
+        <div class="card shadow-sm">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0"><i class="bi bi-file-earmark-excel"></i> Nhập câu hỏi từ Excel</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info small">
+                    File <strong>.xlsx</strong>, dòng 1 là tiêu đề, mỗi dòng từ dòng 2 là một câu hỏi:
+                    <table class="table table-sm table-bordered bg-white my-2">
+                        <tbody>
+                            <tr><th>Mã môn học</th><td>Phải có sẵn trong hệ thống</td></tr>
+                            <tr><th>Danh mục</th><td>Đường dẫn đầy đủ từ danh mục gốc, ngăn cách bằng <code>&gt;</code>, vd: <code>Ngôn ngữ SQL &gt; Truy vấn nâng cao</code>. Danh mục phải có sẵn.</td></tr>
+                            <tr><th>Nội dung câu hỏi</th><td>Bắt buộc</td></tr>
+                            <tr><th>Loại câu hỏi</th><td><code>Trắc nghiệm</code> / <code>Tự luận</code> (hoặc 1 / 2)</td></tr>
+                            <tr><th>Mức độ</th><td><code>Dễ</code> / <code>Trung bình</code> / <code>Khó</code> / <code>Rất khó</code> (hoặc 1–4)</td></tr>
+                            <tr><th>Điểm</th><td>Số &gt; 0, để trống = 1 điểm</td></tr>
+                            <tr><th>Đáp án A, B, C, D…</th><td>Chỉ với câu trắc nghiệm, ít nhất 2 đáp án. Có thể thêm cột <code>Đáp án E</code> … <code>Đáp án J</code>.</td></tr>
+                            <tr><th>Đáp án đúng</th><td>Chữ cái của đáp án đúng, nhiều đáp án ngăn cách bằng dấu phẩy, vd: <code>B</code> hoặc <code>A,C</code></td></tr>
+                            <tr><th>Giải thích</th><td>Không bắt buộc</td></tr>
+                        </tbody>
+                    </table>
+                    Câu hỏi đã có trong hệ thống (cùng danh mục, cùng nội dung) sẽ được bỏ qua, nên có thể nhập lại cùng một file mà không bị trùng.
+                    <div class="mt-2">
+                        <a asp-action="DownloadTemplate" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-download"></i> Tải file mẫu (kèm danh sách danh mục)
+                        </a>
+                    </div>
+                </div>
+
+                @if (errors != null && errors.Count > 0)
+                {
+                    <div class="alert alert-danger">
+                        <strong>File có @errors.Count lỗi, chưa nhập câu hỏi nào:</strong>
+                        <ul class="mb-0">
+                            @foreach (var e in errors.Take(100))
+                            {
+                                <li>@e</li>
+                            }
+                            @if (errors.Count > 100)
+                            {
+                                <li>… và @(errors.Count - 100) lỗi khác</li>
+                            }
+                        </ul>
+                    </div>
+                }
+
+                <form asp-action="Import" method="post" enctype="multipart/form-data">
+                    <div asp-validation-summary="All" class="text-danger"></div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Giảng viên</label>
+                        @if (giaoVienHienTai != null)
+                        {
+                            <input class="form-control" value="@giaoVienHienTai.HoTen (@giaoVienHienTai.MaGiaoVien)" disabled />
+                        }
+                        else
+                        {
+                            <select name="giaoVienId" asp-items="giaoVienList" class="form-select" required>
+                                <option value="">-- Chọn giảng viên cho các câu hỏi được nhập --</option>
+                            </select>
+                        }
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="file" class="form-label">Chọn file Excel</label>
+                        <input type="file" id="file" name="file" class="form-control" accept=".xlsx" required />
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-upload"></i> Nhập
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Hủy
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net11.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="ClosedXML" Version="0.105.1" />
+      <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="11.0.0" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="11.0.0-rc.3.26522.148">
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        <PrivateAssets>all</PrivateAssets>
+      </PackageReference>
+      <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="11.0.0-rc.3" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <AdditionalFiles Include="Areas\Admin\Views\BoMon\Create.cshtml" />
+      <AdditionalFiles Include="Areas\Admin\Views\BoMon\Delete.cshtml" />
+      <AdditionalFiles Include="Areas\Admin\Views\BoMon\Edit.cshtml" />
+      <AdditionalFiles Include="Areas\Admin\Views\BoMon\Index.cshtml" />
+      <AdditionalFiles Include="Areas\Admin\Views\Khoa\Create.cshtml" />
+      <AdditionalFiles Include="Areas\Admin\Views\Khoa\Delete.cshtml" />
+      <AdditionalFiles Include="Areas\Admin\Views\Khoa\Edit.cshtml" />
+      <AdditionalFiles Include="Areas\Admin\Views\Khoa\Index.cshtml" />
+      <AdditionalFiles Include="Areas\Customer\Views\Home\Index.cshtml" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="Views\Home\Index.cshtml" />
+      <_ContentIncludedByDefault Remove="Areas\Admin\Views\TruongTron\Create.cshtml" />
+      <_ContentIncludedByDefault Remove="Areas\Admin\Views\TruongTron\Delete.cshtml" />
+      <_ContentIncludedByDefault Remove="Areas\Admin\Views\TruongTron\Edit.cshtml" />
+      <_ContentIncludedByDefault Remove="Areas\Admin\Views\TruongTron\Index.cshtml" />
+      <_ContentIncludedByDefault Remove="Areas\Admin\Views\TruongTron\_TruongTronForm.cshtml" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\ExamOnlineSystem.Business\ExamOnlineSystem.Business.csproj" />
+      <ProjectReference Include="..\ExamOnlineSystem.DataAccess\ExamOnlineSystem.DataAccess.csproj" />
+      <ProjectReference Include="..\ExamOnlineSystem.Models\ExamOnlineSystem.Models.csproj" />
+      <ProjectReference Include="..\ExamOnlineSystem.Utility\ExamOnlineSystem.Utility.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Areas\Admin\Views\Lop\" />
+      <Folder Include="Areas\Admin\Views\SinhVien\" />
+    </ItemGroup>
+
+</Project>

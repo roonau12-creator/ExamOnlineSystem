@@ -1,0 +1,183 @@
+@model ExamOnlineSystem.Models.ViewModels.PhanSinhVienVaoLopVM
+@{
+    var lop = Model.Lop;
+    ViewData["Title"] = "Phân sinh viên vào lớp " + lop.MaLop;
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h3 class="text-black-50 mb-0"><i class="bi bi-person-plus"></i> Phân sinh viên vào lớp</h3>
+    <div class="d-flex flex-wrap gap-2">
+        <a asp-action="Details" asp-route-id="@lop.Id" class="btn btn-outline-info"><i class="bi bi-eye"></i> Chi tiết lớp</a>
+        <a asp-action="Index" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Quay lại danh sách</a>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body py-3">
+        <div class="row g-3 align-items-center">
+            <div class="col-md">
+                <h5 class="mb-1"><i class="bi bi-people"></i> @lop.MaLop – @lop.TenLop</h5>
+                <div class="text-muted small">Khoa: @(lop.Khoa?.TenKhoa ?? "—")</div>
+            </div>
+            <div class="col-md-auto">
+                <span class="badge bg-primary fs-6">Sĩ số hiện tại: <span id="siSo">@Model.SinhVienTrongLop.Count</span></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Model.CanhBao.Count > 0)
+{
+    <div class="alert alert-warning">
+        <strong><i class="bi bi-exclamation-triangle"></i> Lưu ý:</strong>
+        <ul class="mb-0">
+            @foreach (var cb in Model.CanhBao)
+            {
+                <li>@cb</li>
+            }
+        </ul>
+    </div>
+}
+
+@if (Model.LopKhac.Count == 0)
+{
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> Hệ thống chỉ có lớp này. Hãy tạo thêm lớp hoặc
+        <a asp-controller="SinhVien" asp-action="Create" asp-route-lopId="@lop.Id">thêm sinh viên mới vào lớp</a>.
+    </div>
+}
+
+<div class="row g-3">
+    @* ----- Cột trái: sinh viên của các lớp khác -> thêm vào lớp này ----- *@
+    <div class="col-xl-6">
+        <form asp-action="ThemSinhVienVaoLop" method="post" id="frmThem" data-khoa-id="@lop.KhoaId">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="lopId" value="@lop.Id" />
+
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                        <h5 class="mb-0">Sinh viên ở lớp khác</h5>
+                        <button type="submit" class="btn btn-sm btn-danger btn-luu" disabled>
+                            <i class="bi bi-box-arrow-in-right"></i> Thêm <span class="so-chon">0</span> sinh viên vào lớp này
+                        </button>
+                    </div>
+                    <div class="row g-2 mt-2">
+                        <div class="col-md-5">
+                            <input id="timUngVien" class="form-control form-control-sm" placeholder="Tìm mã SV, họ tên, email..." />
+                        </div>
+                        <div class="col-md-4">
+                            <select id="locKhoa" class="form-select form-select-sm">
+                                <option value="">Tất cả khoa</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select id="locLop" class="form-select form-select-sm">
+                                <option value="">Tất cả lớp</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-wrap align-items-center gap-2 mt-2 small">
+                        <button type="button" id="chonTatCaUngVien" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-check2-all"></i> Chọn tất cả đang hiện
+                        </button>
+                        <button type="button" id="boChonUngVien" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-x-lg"></i> Bỏ chọn
+                        </button>
+                        <span class="ms-auto text-muted" id="demUngVien"></span>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div id="dsUngVien" class="list-group list-group-flush" style="max-height: 520px; overflow-y: auto">
+                        <div class="list-group-item text-muted">Đang tải danh sách sinh viên...</div>
+                    </div>
+                </div>
+                <div class="card-footer bg-white small text-muted">
+                    <i class="bi bi-info-circle"></i> Sinh viên khác khoa sẽ được đổi khoa theo khoa của lớp
+                    <strong>@(lop.Khoa?.TenKhoa ?? "—")</strong>.
+                </div>
+            </div>
+        </form>
+    </div>
+
+    @* ----- Cột phải: sinh viên của lớp này -> chuyển sang lớp khác ----- *@
+    <div class="col-xl-6">
+        <form asp-action="ChuyenSinhVienSangLop" method="post" id="frmChuyen">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="lopId" value="@lop.Id" />
+
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                        <h5 class="mb-0">Sinh viên trong lớp @lop.MaLop</h5>
+                        <a asp-controller="SinhVien" asp-action="Create" asp-route-lopId="@lop.Id" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-person-plus"></i> Thêm sinh viên mới
+                        </a>
+                    </div>
+                    <div class="row g-2 mt-2">
+                        <div class="col-md-5">
+                            <input id="timTrongLop" class="form-control form-control-sm" placeholder="Tìm mã SV, họ tên, email..." />
+                        </div>
+                        <div class="col-md-4">
+                            <select name="lopDichId" id="lopDichId" class="form-select form-select-sm">
+                                <option value="">-- Chuyển sang lớp --</option>
+                                @foreach (var l in Model.LopKhac)
+                                {
+                                    <option value="@l.Id">@l.MaLop – @l.TenLop (@l.TenKhoa, @l.SoSinhVien SV)</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-sm btn-primary w-100 btn-luu" disabled>
+                                <i class="bi bi-box-arrow-right"></i> Chuyển <span class="so-chon">0</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-wrap align-items-center gap-2 mt-2 small">
+                        <button type="button" id="chonTatCaTrongLop" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-check2-all"></i> Chọn tất cả đang hiện
+                        </button>
+                        <button type="button" id="boChonTrongLop" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-x-lg"></i> Bỏ chọn
+                        </button>
+                        <span class="ms-auto text-muted" id="demTrongLop"></span>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div id="dsTrongLop" class="list-group list-group-flush" style="max-height: 520px; overflow-y: auto">
+                        @if (Model.SinhVienTrongLop.Count == 0)
+                        {
+                            <div class="list-group-item text-muted"><i class="bi bi-info-circle"></i> Lớp chưa có sinh viên nào.</div>
+                        }
+                        else
+                        {
+                            @foreach (var sv in Model.SinhVienTrongLop)
+                            {
+                                <label class="list-group-item d-flex gap-2 align-items-start dong-sv"
+                                       data-tim="@($"{sv.MaSinhVien} {sv.HoTen} {sv.Email}".ToLower())">
+                                    <input type="checkbox" name="sinhVienIds" value="@sv.Id" class="form-check-input mt-1 flex-shrink-0" />
+                                    <span class="flex-grow-1">
+                                        <span class="fw-semibold">@sv.MaSinhVien</span> – @sv.HoTen
+                                        <span class="badge bg-light text-dark border ms-1">@(sv.GioiTinh ? "Nam" : "Nữ")</span>
+                                        <br />
+                                        <small class="text-muted">
+                                            @sv.NgaySinh.ToString("dd/MM/yyyy") · @sv.Email
+                                        </small>
+                                    </span>
+                                </label>
+                            }
+                        }
+                    </div>
+                </div>
+                <div class="card-footer bg-white small text-muted">
+                    <i class="bi bi-info-circle"></i> Mỗi sinh viên luôn thuộc một lớp, nên muốn bỏ sinh viên khỏi lớp
+                    thì phải chọn lớp chuyển đến.
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/lop-phansinhvien.js" asp-append-version="true"></script>
+}

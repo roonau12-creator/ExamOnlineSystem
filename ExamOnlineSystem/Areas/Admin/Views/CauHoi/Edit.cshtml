@@ -1,0 +1,42 @@
+@using ExamOnlineSystem.Models.ViewModels
+@model CauHoiFormVM
+@{
+    ViewData["Title"] = "Sửa câu hỏi";
+}
+<div class="row justify-content-center">
+    <div class="col-lg-10 col-xl-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-info text-white">
+                <h4 class="mb-0"><i class="bi bi-pencil-square"></i> Sửa câu hỏi</h4>
+            </div>
+            <div class="card-body">
+                @if (Model.SoDeThiDangDung > 0)
+                {
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        Câu hỏi đang được dùng trong <strong>@Model.SoDeThiDangDung đề thi</strong>.
+                        Thay đổi sẽ áp dụng cho tất cả các đề thi này.
+                    </div>
+                }
+                <form asp-action="Edit" method="post" id="frmCauHoi" enctype="multipart/form-data">
+                    <input type="hidden" asp-for="Id" />
+                    <partial name="_CauHoiForm" model="Model" />
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Lưu
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Hủy
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/cauhoi-form.js" asp-append-version="true"></script>
+}

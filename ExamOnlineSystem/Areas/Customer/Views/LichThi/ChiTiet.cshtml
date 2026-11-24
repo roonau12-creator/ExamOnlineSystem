@@ -1,0 +1,183 @@
+@using ExamOnlineSystem.Models.ViewModels
+@using ExamOnlineSystem.Utility
+@model KyThiChiTietVM
+@{
+    ViewData["Title"] = Model.TenLichThi;
+    var now = DateTime.UtcNow;
+    var bd = Model.ThoiGianBatDau.ToLocalTime();
+    var kt = Model.ThoiGianKetThuc.ToLocalTime();
+    var sapDienRa = Model.ThoiGianBatDau > now;
+    var dangDienRa = Model.ThoiGianBatDau <= now && now < Model.ThoiGianKetThuc;
+    var xepLoai = KetQuaLabel.XepLoai(Model.DiemHe10);
+
+    string ConLai(DateTime moc)
+    {
+        var tg = moc - now;
+        if (tg.TotalDays >= 1) return $"{(int)tg.TotalDays} ngày {tg.Hours} giờ";
+        if (tg.TotalHours >= 1) return $"{(int)tg.TotalHours} giờ {tg.Minutes} phút";
+        return $"{Math.Max(1, (int)Math.Ceiling(tg.TotalMinutes))} phút";
+    }
+}
+
+@* Layout công khai không bọc nội dung trong container -> tự bọc để có lề, không tràn ngang *@
+<div class="container-xl py-4">
+    <a asp-action="Index" asp-route-xem="@(sapDienRa || dangDienRa ? null : "da-qua")" class="small text-decoration-none">
+        <i class="bi bi-arrow-left"></i> Lịch thi của tôi
+    </a>
+    <h3 class="mt-2 mb-1">@Model.TenLichThi</h3>
+    <div class="text-muted mb-3">@Model.MaMonHoc – @Model.TenMonHoc</div>
+
+    @* ===== Trạng thái kỳ thi ===== *@
+    @if (sapDienRa)
+    {
+        <div class="alert alert-primary d-flex flex-wrap align-items-center gap-3">
+            <i class="bi bi-hourglass-top fs-3"></i>
+            <div>
+                <div class="fw-semibold">Sắp diễn ra · còn @ConLai(Model.ThoiGianBatDau)</div>
+                <div class="small">Bắt đầu lúc @bd.ToString("HH:mm") ngày @bd.ToString("dd/MM/yyyy"). Hãy có mặt sớm và kiểm tra tài khoản đăng nhập trước giờ thi.</div>
+            </div>
+            <a asp-action="XacNhan" asp-route-id="@Model.LichThiId" class="btn btn-sm btn-outline-primary ms-auto text-nowrap"><i class="bi bi-list-check"></i> Kiểm tra trước khi thi</a>
+        </div>
+    }
+    else if (dangDienRa)
+    {
+        <div class="alert alert-warning d-flex flex-wrap align-items-center gap-3">
+            <i class="bi bi-alarm fs-3"></i>
+            <div>
+                <div class="fw-semibold">Đang diễn ra · còn @ConLai(Model.ThoiGianKetThuc)</div>
+                <div class="small">Kết thúc lúc @kt.ToString("HH:mm"). Trạng thái của bạn: <strong>@KetQuaLabel.TenTrangThai(Model.TrangThai)</strong>.</div>
+            </div>
+            @if (Model.TrangThai != 2)
+            {
+                <a asp-action="XacNhan" asp-route-id="@Model.LichThiId" class="btn btn-success ms-auto text-nowrap"><i class="bi bi-box-arrow-in-right"></i> Vào thi</a>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-secondary d-flex align-items-center gap-3">
+            <i class="bi bi-flag fs-3"></i>
+            <div>
+                <div class="fw-semibold">Đã kết thúc</div>
+                <div class="small">
+                    @(Model.TrangThai == 0 ? "Bạn không dự thi kỳ thi này." : $"Trạng thái: {KetQuaLabel.TenTrangThai(Model.TrangThai)}.")
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="row g-3">
+        @* ===== Thông tin kỳ thi ===== *@
+        <div class="col-lg-7">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white"><h5 class="mb-0"><i class="bi bi-info-circle"></i> Thông tin kỳ thi</h5></div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">Thời gian</dt>
+                        <dd class="col-sm-8">
+                            @bd.ToString("HH:mm") – @kt.ToString("HH:mm"), @bd.ToString("dd/MM/yyyy")
+                            <div class="small text-muted">Khung giờ mở bài thi</div>
+                        </dd>
+
+                        <dt class="col-sm-4">Thời gian làm bài</dt>
+                        <dd class="col-sm-8">@Model.ThoiLuong phút</dd>
+
+                        <dt class="col-sm-4">Môn học</dt>
+                        <dd class="col-sm-8">@Model.TenMonHoc <span class="text-muted">(@Model.MaMonHoc)</span></dd>
+
+                        <dt class="col-sm-4">Đề thi</dt>
+                        <dd class="col-sm-8">@Model.TenDeThi</dd>
+
+                        <dt class="col-sm-4">Hình thức</dt>
+                        <dd class="col-sm-8">@DeThiLabel.TenLoaiDeThi(Model.LoaiDeThi)</dd>
+
+                        <dt class="col-sm-4">Số câu hỏi</dt>
+                        <dd class="col-sm-8">@Model.SoCauHoi câu · tổng @Model.TongDiem.ToString("0.##") điểm</dd>
+
+                        <dt class="col-sm-4">Giảng viên phụ trách</dt>
+                        <dd class="col-sm-8">@Model.GiaoVien</dd>
+
+                        <dt class="col-sm-4">Lớp dự thi</dt>
+                        <dd class="col-sm-8">@(Model.Lops.Count > 0 ? string.Join(", ", Model.Lops) : "—") <span class="text-muted">· @Model.SoThiSinh thí sinh</span></dd>
+
+                        @if (!string.IsNullOrWhiteSpace(Model.GhiChu))
+                        {
+                            <dt class="col-sm-4">Ghi chú</dt>
+                            <dd class="col-sm-8 mb-0"><i class="bi bi-sticky"></i> @Model.GhiChu</dd>
+                        }
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            @* ===== Kết quả của bạn ===== *@
+            <div class="card shadow-sm mb-3">
+                <div class="card-header bg-white"><h5 class="mb-0"><i class="bi bi-award"></i> Kết quả của bạn</h5></div>
+                <div class="card-body">
+                    @if (Model.Diem.HasValue)
+                    {
+                        <div class="d-flex align-items-end gap-2 mb-1">
+                            <span class="fs-2 fw-bold lh-1">@Model.Diem.Value.ToString("0.##")</span>
+                            <span class="text-muted">/ @Model.TongDiem.ToString("0.##") điểm</span>
+                        </div>
+                        <div>
+                            <span class="fw-semibold">@Model.DiemHe10!.Value.ToString("0.00")</span><span class="text-muted"> / 10</span>
+                            <span class="badge text-bg-@KetQuaLabel.MauXepLoai(xepLoai) ms-1">@xepLoai</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <span class="badge text-bg-@KetQuaLabel.MauTrangThai(Model.TrangThai)">@KetQuaLabel.TenTrangThai(Model.TrangThai)</span>
+                        <div class="small text-muted mt-1">@(sapDienRa ? "Kỳ thi chưa bắt đầu." : "Chưa có điểm.")</div>
+                    }
+
+                    @if (Model.LanThis.Count > 0)
+                    {
+                        <hr />
+                        <div class="small fw-semibold mb-2">Các lượt làm bài</div>
+                        <ul class="list-unstyled small mb-0">
+                            @foreach (var lan in Model.LanThis)
+                            {
+                                <li class="d-flex justify-content-between gap-2 mb-1">
+                                    <span>
+                                        Lần @lan.LanThu · @lan.ThoiGianBatDau.ToLocalTime().ToString("HH:mm")
+                                        @if (lan.ThoiGianLam is { } tg)
+                                        {
+                                            <span class="text-muted">(@((int)tg.TotalMinutes) phút @tg.Seconds giây)</span>
+                                        }
+                                    </span>
+                                    <span class="text-nowrap">
+                                        @if (lan.Diem.HasValue)
+                                        {
+                                            <strong>@lan.Diem.Value.ToString("0.##")</strong><span class="text-muted">/@lan.TongDiem.ToString("0.##")</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">@KetQuaLabel.TenTrangThaiLanThi(lan.TrangThai)</span>
+                                        }
+                                    </span>
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
+            </div>
+
+            @* ===== Lưu ý ===== *@
+            @if (sapDienRa || dangDienRa)
+            {
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white"><h5 class="mb-0"><i class="bi bi-exclamation-circle"></i> Lưu ý khi thi</h5></div>
+                    <div class="card-body small">
+                        <ul class="mb-0 ps-3">
+                            <li>Bài làm có @Model.ThoiLuong phút kể từ lúc bắt đầu, và phải nộp trước @kt.ToString("HH:mm").</li>
+                            <li>Giữ kết nối mạng ổn định; không mở nhiều tab làm bài cùng lúc.</li>
+                            <li>Có vấn đề trong lúc thi, báo ngay cho giảng viên @Model.GiaoVien.</li>
+                        </ul>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>

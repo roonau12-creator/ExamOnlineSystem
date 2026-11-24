@@ -1,0 +1,123 @@
+@using ExamOnlineSystem.Models.ViewModels
+@model RegisterVM
+@{
+    ViewData["Title"] = "Đăng ký";
+    // Controller chỉ gửi danh sách vai trò khi người đang đăng nhập là Admin
+    var choChonVaiTro = Model.RoleList.Any();
+}
+<div class="row justify-content-center align-items-center login-wrapper">
+    <div class="col-sm-11 col-md-8 col-lg-6 col-xl-5">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4 p-md-5">
+                <div class="text-center mb-4">
+                    <div class="login-icon mx-auto mb-3">
+                        <i class="bi bi-person-plus"></i>
+                    </div>
+                    <h3 class="mb-1">@(choChonVaiTro ? "Tạo tài khoản" : "Đăng ký")</h3>
+                    <p class="text-muted mb-0">Hệ thống quản lý thi trực tuyến</p>
+                </div>
+
+                <form asp-action="Register" asp-route-returnUrl='@ViewData["ReturnUrl"]' method="post" novalidate>
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2" role="alert"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="FullName" class="form-label"></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                            <input asp-for="FullName" class="form-control" placeholder="Nguyễn Văn An"
+                                   autocomplete="name" autofocus />
+                        </div>
+                        <span asp-validation-for="FullName" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label"></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                            <input asp-for="Email" class="form-control" placeholder="nhap@email.com"
+                                   autocomplete="username" />
+                        </div>
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="PhoneNumber" class="form-label"></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+                            <input asp-for="PhoneNumber" class="form-control" placeholder="0901234567"
+                                   autocomplete="tel" inputmode="tel" />
+                        </div>
+                        <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Password" class="form-label"></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-key"></i></span>
+                            <input asp-for="Password" class="form-control" placeholder="Nhập mật khẩu"
+                                   autocomplete="new-password" />
+                            <button type="button" class="btn btn-outline-secondary btn-toggle-password"
+                                    data-target="#Password" title="Hiện/ẩn mật khẩu" aria-label="Hiện/ẩn mật khẩu">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        <span asp-validation-for="Password" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="ConfirmPassword" class="form-label"></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-key-fill"></i></span>
+                            <input asp-for="ConfirmPassword" class="form-control" placeholder="Nhập lại mật khẩu"
+                                   autocomplete="new-password" />
+                            <button type="button" class="btn btn-outline-secondary btn-toggle-password"
+                                    data-target="#ConfirmPassword" title="Hiện/ẩn mật khẩu" aria-label="Hiện/ẩn mật khẩu">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                    </div>
+
+                    @if (choChonVaiTro)
+                    {
+                        <div class="mb-3">
+                            <label asp-for="Role" class="form-label"></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-shield-check"></i></span>
+                                <select asp-for="Role" asp-items="Model.RoleList" class="form-select">
+                                    <option value="">-- Mặc định: Student --</option>
+                                </select>
+                            </div>
+                            <span asp-validation-for="Role" class="text-danger small"></span>
+                        </div>
+                    }
+
+                    <button type="submit" class="btn btn-primary w-100 py-2 mt-2">
+                        <i class="bi bi-person-plus"></i> @(choChonVaiTro ? "Tạo tài khoản" : "Đăng ký")
+                    </button>
+                </form>
+
+                @if (!choChonVaiTro)
+                {
+                    <p class="text-center text-muted mt-4 mb-0">
+                        Đã có tài khoản?
+                        <a asp-action="Login" asp-route-returnUrl='@ViewData["ReturnUrl"]'>Đăng nhập</a>
+                    </p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Hiện/ẩn mật khẩu cho từng ô
+        $(".btn-toggle-password").on("click", function () {
+            var $pwd = $($(this).data("target"));
+            var hien = $pwd.attr("type") === "password";
+            $pwd.attr("type", hien ? "text" : "password");
+            $(this).find("i").toggleClass("bi-eye", !hien).toggleClass("bi-eye-slash", hien);
+        });
+    </script>
+}

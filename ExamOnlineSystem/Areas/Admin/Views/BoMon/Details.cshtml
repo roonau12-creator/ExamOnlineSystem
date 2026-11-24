@@ -1,0 +1,241 @@
+@model ExamOnlineSystem.Models.ViewModels.BoMonDetailVM
+@{
+    var boMon = Model.BoMon;
+    ViewData["Title"] = "Chi tiết bộ môn " + boMon.TenBoMon;
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h3 class="text-black-50 mb-0">Chi tiết bộ môn</h3>
+    <div class="d-flex flex-wrap gap-2">
+        <a asp-controller="ThongKe" asp-action="BoMonChiTiet" asp-route-id="@boMon.Id" class="btn btn-outline-success">
+            <i class="bi bi-bar-chart"></i> Thống kê
+        </a>
+        <a asp-action="PhanGiaoVien" asp-route-id="@boMon.Id" class="btn btn-outline-success"><i class="bi bi-people"></i> Gán giảng viên</a>
+        <a asp-action="Edit" asp-route-id="@boMon.Id" class="btn btn-primary"><i class="bi bi-pencil-square"></i> Sửa</a>
+        <a asp-action="Index" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Quay lại danh sách</a>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="bi bi-diagram-3"></i> @boMon.TenBoMon</h5>
+    </div>
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-3">Mã bộ môn</dt>
+            <dd class="col-sm-9">@boMon.MaBoMon</dd>
+
+            <dt class="col-sm-3">Tên bộ môn</dt>
+            <dd class="col-sm-9">@boMon.TenBoMon</dd>
+
+            <dt class="col-sm-3">Khoa</dt>
+            <dd class="col-sm-9">
+                @if (boMon.Khoa != null)
+                {
+                    <a asp-controller="Khoa" asp-action="Details" asp-route-id="@boMon.KhoaId">@boMon.Khoa.TenKhoa</a>
+                }
+                else
+                {
+                    <span>—</span>
+                }
+            </dd>
+
+            <dt class="col-sm-3">Số thứ tự</dt>
+            <dd class="col-sm-9 mb-0">@boMon.SoThuTu</dd>
+        </dl>
+    </div>
+</div>
+
+@{
+    var tongQuan = new (string Ten, int SoLuong, string Icon)[]
+    {
+        ("Giảng viên", Model.GiaoViens.Count, "bi-person-badge"),
+        ("Môn học", Model.MonHocs.Count, "bi-book"),
+        ("Học phần", Model.HocPhans.Count, "bi-journal-text"),
+        ("Đề thi", Model.SoDeThi, "bi-file-earmark-text")
+    };
+}
+<div class="row g-3 mb-4">
+    @foreach (var item in tongQuan)
+    {
+        <div class="col-6 col-lg-3">
+            <div class="card border-primary h-100">
+                <div class="card-body py-2">
+                    <div class="text-muted small"><i class="bi @item.Icon"></i> @item.Ten</div>
+                    <div class="fs-4 fw-bold text-primary">@item.SoLuong</div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white">
+        <ul class="nav nav-tabs card-header-tabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-monhoc" type="button" role="tab">
+                    Môn học <span class="badge text-bg-secondary">@Model.MonHocs.Count</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-hocphan" type="button" role="tab">
+                    Học phần <span class="badge text-bg-secondary">@Model.HocPhans.Count</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-giaovien" type="button" role="tab">
+                    Giảng viên <span class="badge text-bg-secondary">@Model.GiaoViens.Count</span>
+                </button>
+            </li>
+        </ul>
+    </div>
+    <div class="card-body tab-content">
+        @* ===== Môn học ===== *@
+        <div class="tab-pane fade show active" id="tab-monhoc" role="tabpanel">
+            <div class="text-end mb-2">
+                <a asp-controller="MonHoc" asp-action="Create" class="btn btn-sm btn-outline-danger"><i class="bi bi-plus-circle"></i> Thêm môn học</a>
+            </div>
+            @if (Model.MonHocs.Count == 0)
+            {
+                <p class="text-muted mb-0"><i class="bi bi-info-circle"></i> Bộ môn chưa có môn học nào.</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th class="bg-primary text-white-50">Mã môn học</th>
+                                <th class="bg-primary text-white-50">Tên môn học</th>
+                                <th class="bg-primary text-white-50">Hình thức thi</th>
+                                <th class="bg-primary text-white-50 text-center">Thời gian</th>
+                                <th class="bg-primary text-white-50 text-center">Học phần</th>
+                                <th class="bg-primary text-white-50 text-center">Đề thi</th>
+                                <th class="bg-primary text-white-50">Trạng thái</th>
+                                <th class="bg-primary text-white-50"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var mh in Model.MonHocs)
+                            {
+                                <tr>
+                                    <td>@mh.MaMonHoc</td>
+                                    <td>@mh.TenMonHoc</td>
+                                    <td>@mh.HinhThucThi</td>
+                                    <td class="text-center text-nowrap">@mh.ThoiGianThi phút</td>
+                                    <td class="text-center">@mh.SoHocPhan</td>
+                                    <td class="text-center">@mh.SoDeThi</td>
+                                    <td>
+                                        <span class="badge @(mh.TrangThai == "Hoạt động" ? "text-bg-success" : "text-bg-secondary")">@mh.TrangThai</span>
+                                    </td>
+                                    <td class="text-center text-nowrap">
+                                        <a asp-controller="MonHoc" asp-action="Edit" asp-route-id="@mh.Id" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-pencil-square"></i> Sửa
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+
+        @* ===== Học phần ===== *@
+        <div class="tab-pane fade" id="tab-hocphan" role="tabpanel">
+            <div class="text-end mb-2">
+                <a asp-controller="HocPhan" asp-action="Create" class="btn btn-sm btn-outline-danger"><i class="bi bi-plus-circle"></i> Thêm học phần</a>
+            </div>
+            @if (Model.HocPhans.Count == 0)
+            {
+                <p class="text-muted mb-0"><i class="bi bi-info-circle"></i> Bộ môn chưa có học phần nào.</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th class="bg-primary text-white-50 text-center">STT</th>
+                                <th class="bg-primary text-white-50">Mã học phần</th>
+                                <th class="bg-primary text-white-50">Tên học phần</th>
+                                <th class="bg-primary text-white-50">Môn học</th>
+                                <th class="bg-primary text-white-50 text-center">Số tín chỉ</th>
+                                <th class="bg-primary text-white-50"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (var i = 0; i < Model.HocPhans.Count; i++)
+                            {
+                                var hp = Model.HocPhans[i];
+                                <tr>
+                                    <td class="text-center">@(i + 1)</td>
+                                    <td>@hp.MaHocPhan</td>
+                                    <td>@hp.TenHocPhan</td>
+                                    <td>@hp.TenMonHoc</td>
+                                    <td class="text-center">@hp.SoTinChi</td>
+                                    <td class="text-center text-nowrap">
+                                        <a asp-controller="HocPhan" asp-action="Edit" asp-route-id="@hp.Id" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-pencil-square"></i> Sửa
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+
+        @* ===== Giảng viên ===== *@
+        <div class="tab-pane fade" id="tab-giaovien" role="tabpanel">
+            <div class="text-end mb-2">
+                <a asp-controller="GiaoVien" asp-action="Index" asp-route-boMonId="@boMon.Id" class="btn btn-sm btn-outline-primary"><i class="bi bi-box-arrow-up-right"></i> Mở trong trang Giảng viên</a>
+                <a asp-action="PhanGiaoVien" asp-route-id="@boMon.Id" class="btn btn-sm btn-outline-success"><i class="bi bi-people"></i> Gán giảng viên</a>
+                <a asp-controller="GiaoVien" asp-action="Create" asp-route-boMonId="@boMon.Id" class="btn btn-sm btn-outline-danger"><i class="bi bi-person-plus"></i> Thêm giảng viên</a>
+            </div>
+            @if (Model.GiaoViens.Count == 0)
+            {
+                <p class="text-muted mb-0"><i class="bi bi-info-circle"></i> Bộ môn chưa có giảng viên nào.</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th class="bg-primary text-white-50 text-center">STT</th>
+                                <th class="bg-primary text-white-50">Mã giảng viên</th>
+                                <th class="bg-primary text-white-50">Họ tên</th>
+                                <th class="bg-primary text-white-50">Email</th>
+                                <th class="bg-primary text-white-50">Số điện thoại</th>
+                                <th class="bg-primary text-white-50"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (var i = 0; i < Model.GiaoViens.Count; i++)
+                            {
+                                var gv = Model.GiaoViens[i];
+                                <tr>
+                                    <td class="text-center">@(i + 1)</td>
+                                    <td>@gv.MaGiaoVien</td>
+                                    <td>@gv.HoTen</td>
+                                    <td>@gv.Email</td>
+                                    <td>@gv.SoDienThoai</td>
+                                    <td class="text-center text-nowrap">
+                                        <a asp-controller="GiaoVien" asp-action="Details" asp-route-id="@gv.Id" class="btn btn-sm btn-outline-info">
+                                            <i class="bi bi-eye"></i> Xem
+                                        </a>
+                                        <a asp-controller="GiaoVien" asp-action="Edit" asp-route-id="@gv.Id" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-pencil-square"></i> Sửa
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>

@@ -1,0 +1,87 @@
+@model ExamOnlineSystem.Models.ViewModels.SinhVienEditVM
+@{
+    ViewData["Title"] = "Cập nhật sinh viên";
+}
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-xl-7">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="bi bi-pencil-square"></i> Cập nhật sinh viên</h4>
+            </div>
+            <div class="card-body">
+                <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+                    <input type="hidden" asp-for="Id" />
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                    <h6 class="text-uppercase text-muted small fw-bold mb-3">Thông tin sinh viên</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-5">
+                            <label asp-for="MaSinhVien" class="form-label"></label>
+                            <input asp-for="MaSinhVien" class="form-control" placeholder="Ví dụ: 2251234567" />
+                            <span asp-validation-for="MaSinhVien" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-7">
+                            <label asp-for="HoTen" class="form-label"></label>
+                            <input asp-for="HoTen" class="form-control" placeholder="Ví dụ: Nguyễn Văn An" />
+                            <span asp-validation-for="HoTen" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-5">
+                            <label asp-for="NgaySinh" class="form-label"></label>
+                            <input asp-for="NgaySinh" type="date" class="form-control" />
+                            <span asp-validation-for="NgaySinh" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-7">
+                            <label class="form-label d-block">Giới tính</label>
+                            <div class="form-check form-check-inline mt-1">
+                                <input class="form-check-input" type="radio" asp-for="GioiTinh" value="true" id="gtNam" />
+                                <label class="form-check-label" for="gtNam">Nam</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" asp-for="GioiTinh" value="false" id="gtNu" />
+                                <label class="form-check-label" for="gtNu">Nữ</label>
+                            </div>
+                            <span asp-validation-for="GioiTinh" class="text-danger d-block"></span>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="LopId" class="form-label"></label>
+                            <select asp-for="LopId" asp-items='ViewData["LopSelect"] as List<SelectListItem>' class="form-select">
+                                <option value="0">-- Chọn lớp --</option>
+                            </select>
+                            <div class="form-text">Khoa của sinh viên được lấy theo khoa của lớp.</div>
+                            <span asp-validation-for="LopId" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-7">
+                            <label asp-for="Email" class="form-label"></label>
+                            <input asp-for="Email" type="email" class="form-control" placeholder="sinhvien@example.vn" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-5">
+                            <label asp-for="SoDienThoai" class="form-label"></label>
+                            <input asp-for="SoDienThoai" class="form-control" placeholder="0901234567" />
+                            <span asp-validation-for="SoDienThoai" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info small py-2" role="alert">
+                        <i class="bi bi-info-circle"></i>
+                        Tài khoản đăng nhập được cập nhật theo: email mới sẽ là tên đăng nhập mới.
+                        Mật khẩu giữ nguyên.
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Lưu thay đổi
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Hủy
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

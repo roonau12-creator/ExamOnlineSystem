@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="ExamOnlineSystem.Business/ExamOnlineSystem.Business.csproj" />
+  <Project Path="ExamOnlineSystem.DataAccess/ExamOnlineSystem.DataAccess.csproj" />
+  <Project Path="ExamOnlineSystem.Models/ExamOnlineSystem.Models.csproj" />
+  <Project Path="ExamOnlineSystem.Utility/ExamOnlineSystem.Utility.csproj" />
+  <Project Path="ExamOnlineSystem/ExamOnlineSystem.csproj" />
+</Solution>

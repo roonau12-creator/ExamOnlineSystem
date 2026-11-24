@@ -1,0 +1,73 @@
+@{
+    ViewData["Title"] = "Danh sách câu hỏi đề thi";
+}
+<div class="text-center text-black-50">
+    <h3>Danh sách câu hỏi đề thi</h3>
+</div>
+
+<div class="text-end mb-3">
+    <a asp-action="Create" asp-route-deThiId="@ViewData["DeThiId"]" class="btn btn-outline-danger">
+        <i class="bi bi-plus-circle"></i>Thêm câu hỏi vào đề
+    </a>
+</div>
+
+<div class="alert alert-light border small">
+    <i class="bi bi-info-circle"></i>
+    Mỗi dòng là một câu hỏi nằm trong một đề thi (câu số, điểm trong đề, đáp án đúng theo thứ tự đáp án của đề).
+    Thêm câu bằng nút <strong>Thêm câu hỏi vào đề</strong>; ở mỗi dòng: <strong>Sửa</strong> (đổi câu hỏi, điểm, vị trí) hoặc
+    <strong>Bỏ khỏi đề</strong>. Đề đã phát hành cần hủy phát hành trước khi thay đổi.
+</div>
+
+@* Bộ lọc nhanh: lọc trực tiếp trên bảng (cauhoidethi.js) *@
+<div class="row g-2 mb-3">
+    <div class="col-sm-6 col-md-3">
+        <select id="locDeThi" class="form-select" data-chon="@ViewData["DeThiId"]">
+            <option value="">-- Tất cả đề thi --</option>
+        </select>
+    </div>
+    <div class="col-sm-6 col-md-3">
+        <select id="locMonHoc" class="form-select">
+            <option value="">-- Tất cả môn học --</option>
+        </select>
+    </div>
+    <div class="col-sm-6 col-md-3">
+        <select id="locTrangThai" class="form-select">
+            <option value="">-- Tất cả trạng thái đề --</option>
+            <option>Đã phát hành</option>
+            <option>Nháp</option>
+        </select>
+    </div>
+    <div class="col-sm-6 col-md-3">
+        <select id="locLoai" class="form-select">
+            <option value="">-- Tất cả loại câu --</option>
+            <option>Trắc nghiệm</option>
+            <option>Tự luận</option>
+        </select>
+    </div>
+</div>
+
+<table id="tblCauHoiDeThi" class="table table-bordered table-hover w-100">
+    <thead>
+        <tr>
+            <th class="bg-primary text-white-50">Đề thi</th>
+            <th class="bg-primary text-white-50 text-center">Câu số</th>
+            <th class="bg-primary text-white-50">Câu hỏi</th>
+            <th class="bg-primary text-white-50">Môn học</th>
+            <th class="bg-primary text-white-50">Loại</th>
+            <th class="bg-primary text-white-50">Mức độ</th>
+            <th class="bg-primary text-white-50 text-center">Điểm</th>
+            <th class="bg-primary text-white-50 text-center">Đáp án đúng</th>
+            <th class="bg-primary text-white-50 text-center">Trạng thái đề</th>
+            <th class="bg-primary text-white-50">Chức năng</th>
+        </tr>
+    </thead>
+</table>
+
+<form id="deleteForm" method="post">
+    @Html.AntiForgeryToken()
+</form>
+
+@section Scripts {
+    <script src="~/js/cauhoidethi.js" asp-append-version="true"></script>
+    <script src="~/js/cauhoidethi-xoa.js" asp-append-version="true"></script>
+}

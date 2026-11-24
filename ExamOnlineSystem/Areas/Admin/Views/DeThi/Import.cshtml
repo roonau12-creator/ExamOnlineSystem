@@ -1,0 +1,103 @@
+@{
+    ViewData["Title"] = "Nhập đề thi từ Excel";
+    var errors = ViewBag.Errors as List<string>;
+    var giaoVienHienTai = ViewData["GiaoVienHienTai"] as GiaoVien;
+    var giaoVienList = ViewData["GiaoVienList"] as SelectList;
+}
+<div class="row justify-content-center">
+    <div class="col-lg-10 col-xl-9">
+        <div class="card shadow-sm">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0"><i class="bi bi-file-earmark-excel"></i> Nhập đề thi từ Excel</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info small">
+                    File <strong>.xlsx</strong> gồm 2 sheet (dòng 1 là tiêu đề):
+                    <div class="row g-2 my-2">
+                        <div class="col-md-6">
+                            <strong>Sheet <code>DeThi</code></strong> — mỗi dòng một đề:
+                            <table class="table table-sm table-bordered bg-white mb-0 mt-1">
+                                <tbody>
+                                    <tr><th>Mã đề thi</th><td>Bắt buộc, không trùng</td></tr>
+                                    <tr><th>Tên đề thi</th><td>Bắt buộc</td></tr>
+                                    <tr><th>Mã môn học</th><td>Vd: <code>CSDL</code></td></tr>
+                                    <tr><th>Loại đề</th><td><code>Trắc nghiệm</code> / <code>Tự luận</code> / <code>Kết hợp</code></td></tr>
+                                    <tr><th>Thời lượng (phút)</th><td>1–600, để trống = 45</td></tr>
+                                    <tr><th>Tổng điểm</th><td>Để trống = 10</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Sheet <code>CauHoiDeThi</code></strong> — mỗi dòng một câu trong đề:
+                            <table class="table table-sm table-bordered bg-white mb-0 mt-1">
+                                <tbody>
+                                    <tr><th>Mã đề thi</th><td>Phải có trong sheet DeThi</td></tr>
+                                    <tr><th>Mã câu hỏi</th><td>Vd: <code>9</code> hoặc <code>#9</code></td></tr>
+                                    <tr><th>Điểm</th><td>Để trống = điểm mặc định của câu</td></tr>
+                                </tbody>
+                            </table>
+                            <div class="mt-1">Thứ tự các dòng = thứ tự câu trong đề.</div>
+                        </div>
+                    </div>
+                    <ul class="mb-2">
+                        <li>Câu hỏi phải thuộc đúng môn của đề và phù hợp loại đề (đề trắc nghiệm chỉ nhận câu trắc nghiệm, đề tự luận chỉ nhận câu tự luận).</li>
+                        <li>Đề có mã đã tồn tại sẽ được bỏ qua, nên có thể nhập lại cùng một file.</li>
+                        <li>Đề chưa có câu hoặc tổng điểm các câu chưa khớp vẫn được nhập (đề nháp) và được báo trong thông báo kết quả.</li>
+                    </ul>
+                    <a asp-action="DownloadTemplate" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-download"></i> Tải file mẫu (kèm danh sách câu hỏi trong ngân hàng)
+                    </a>
+                </div>
+
+                @if (errors != null && errors.Count > 0)
+                {
+                    <div class="alert alert-danger">
+                        <strong>File có @errors.Count lỗi, chưa nhập đề thi nào:</strong>
+                        <ul class="mb-0">
+                            @foreach (var e in errors.Take(100))
+                            {
+                                <li>@e</li>
+                            }
+                            @if (errors.Count > 100)
+                            {
+                                <li>… và @(errors.Count - 100) lỗi khác</li>
+                            }
+                        </ul>
+                    </div>
+                }
+
+                <form asp-action="Import" method="post" enctype="multipart/form-data">
+                    <div asp-validation-summary="All" class="text-danger"></div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Giảng viên</label>
+                        @if (giaoVienHienTai != null)
+                        {
+                            <input class="form-control" value="@giaoVienHienTai.HoTen (@giaoVienHienTai.MaGiaoVien)" disabled />
+                        }
+                        else
+                        {
+                            <select name="giaoVienId" asp-items="giaoVienList" class="form-select" required>
+                                <option value="">-- Chọn giảng viên cho các đề được nhập --</option>
+                            </select>
+                        }
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="file" class="form-label">Chọn file Excel</label>
+                        <input type="file" id="file" name="file" class="form-control" accept=".xlsx" required />
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-upload"></i> Nhập
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Hủy
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

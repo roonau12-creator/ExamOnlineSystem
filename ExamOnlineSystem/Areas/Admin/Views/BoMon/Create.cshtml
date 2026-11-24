@@ -1,0 +1,57 @@
+@model BoMon
+@{
+    ViewData["Title"] = "Thêm bộ môn";
+}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="bi bi-plus-circle"></i> Thêm bộ môn</h4>
+            </div>
+            <div class="card-body">
+                <form asp-action="Create" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="KhoaId" class="form-label"></label>
+                        <select asp-for="KhoaId" asp-items='ViewData["KhoaList"] as SelectList' class="form-select">
+                            <option value="">-- Chọn khoa --</option>
+                        </select>
+                        <span asp-validation-for="KhoaId" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="MaBoMon" class="form-label"></label>
+                        <input asp-for="MaBoMon" class="form-control" placeholder="Nhập mã bộ môn" />
+                        <span asp-validation-for="MaBoMon" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="TenBoMon" class="form-label"></label>
+                        <input asp-for="TenBoMon" class="form-control" placeholder="Nhập tên bộ môn" />
+                        <span asp-validation-for="TenBoMon" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="SoThuTu" class="form-label"></label>
+                        <input asp-for="SoThuTu" type="number" min="1" class="form-control" placeholder="Nhập số thứ tự" />
+                        <span asp-validation-for="SoThuTu" class="text-danger"></span>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Thêm
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Hủy
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

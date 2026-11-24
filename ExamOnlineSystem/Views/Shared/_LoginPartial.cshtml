@@ -1,0 +1,33 @@
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+@* Góc phải thanh menu: tên người dùng + Đăng xuất, hoặc nút Đăng nhập *@
+<ul class="navbar-nav">
+    @if (SignInManager.IsSignedIn(User))
+    {
+       
+        <li class="nav-item d-flex align-items-center me-2">
+            <span class="navbar-text text-dark"><i class="bi bi-person-circle"></i> @UserManager.GetUserName(User)</span>
+        </li>
+        <li class="nav-item">
+            <form asp-area="Identity" asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                <button type="submit" class="btn btn-link nav-link text-dark">
+                    <i class="bi bi-box-arrow-right"></i> Đăng xuất
+                </button>
+            </form>
+        </li>
+    }
+    else
+    {
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-area="Identity" asp-controller="Account" asp-action="Register">
+                <i class="bi bi-person-plus"></i> Đăng ký
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-area="Identity" asp-controller="Account" asp-action="Login">
+                <i class="bi bi-box-arrow-in-right"></i> Đăng nhập
+            </a>
+        </li>
+    }
+</ul>

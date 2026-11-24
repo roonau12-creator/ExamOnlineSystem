@@ -1,0 +1,121 @@
+@using ExamOnlineSystem.Models.ViewModels
+@model LichThiFormVM
+@* Phần thân form dùng chung cho Tạo / Sửa lịch thi (lichthi-form.js).
+   Sửa lịch đang diễn ra: khóa đề, giờ bắt đầu, lớp (chỉ sửa tên, ghi chú, kéo dài giờ kết thúc). *@
+@{
+    var cacDe = ViewData["DeThiList"] as List<DeThiListItemVM> ?? new();
+    var cacLop = ViewData["LopList"] as List<LopChonVM> ?? new();
+    var loiLop = ViewData.ModelState[nameof(LichThiFormVM.LopIds)]?.Errors;
+    var khoa = (ViewData["TrangThai"] as string) == TrangThaiLichThi.DangDienRa;
+}
+<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+@if (cacDe.Count == 0 && Model.Id == 0)
+{
+    <div class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle"></i>
+        Chưa có đề thi <strong>đã phát hành</strong> nào @(User.IsInRole(ExamOnlineSystem.Utility.SD.Role_Admin) ? "" : "của bạn") để tạo lịch thi.
+        Hãy <a asp-controller="DeThi" asp-action="Index" class="alert-link">phát hành đề thi</a> trước.
+    </div>
+}
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-primary text-white"><h5 class="mb-0">Thông tin lịch thi</h5></div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label asp-for="DeThiId" class="form-label"></label>
+                    <select asp-for="DeThiId" class="form-select" disabled="@khoa">
+                        <option value="">-- Chọn đề thi --</option>
+                        @foreach (var g in cacDe.GroupBy(d => d.TenMonHoc))
+                        {
+                            <optgroup label="@g.Key">
+                                @foreach (var d in g)
+                                {
+                                    <option value="@d.Id" data-thoi-luong="@d.ThoiLuong" data-ten="@d.TenDeThi">
+                                        @d.MaDeThi – @d.TenDeThi (@d.ThoiLuong phút, @d.SoCauHoi câu)
+                                    </option>
+                                }
+                            </optgroup>
+                        }
+                    </select>
+                    <span asp-validation-for="DeThiId" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="TenLichThi" class="form-label"></label>
+                    <input asp-for="TenLichThi" class="form-control" placeholder="vd: Thi giữa kỳ CSDL – Ca 1" />
+                    <span asp-validation-for="TenLichThi" class="text-danger"></span>
+                </div>
+
+                <div class="row g-3 mb-2">
+                    <div class="col-sm-6">
+                        <label asp-for="ThoiGianBatDau" class="form-label"></label>
+                        <input asp-for="ThoiGianBatDau" type="datetime-local" class="form-control" disabled="@khoa" />
+                        <span asp-validation-for="ThoiGianBatDau" class="text-danger"></span>
+                    </div>
+                    <div class="col-sm-6">
+                        <label asp-for="ThoiGianKetThuc" class="form-label"></label>
+                        <input asp-for="ThoiGianKetThuc" type="datetime-local" class="form-control" />
+                        <span asp-validation-for="ThoiGianKetThuc" class="text-danger"></span>
+                    </div>
+                </div>
+                <div id="thongTinGio" class="form-text mb-3">Chọn đề và giờ bắt đầu: giờ kết thúc tự điền = bắt đầu + thời gian làm bài.</div>
+
+                <div class="mb-0">
+                    <label asp-for="GhiChu" class="form-label"></label>
+                    <textarea asp-for="GhiChu" class="form-control" rows="2" placeholder="vd: Phòng máy A1, mang thẻ sinh viên"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white d-flex flex-wrap align-items-center gap-2">
+                <h5 class="mb-0 me-auto">Lớp tham gia</h5>
+                <span class="small" id="tongChon">Chưa chọn lớp nào</span>
+            </div>
+            <div class="card-body">
+                @if (loiLop != null && loiLop.Count > 0)
+                {
+                    <div class="alert alert-danger py-2 small">
+                        <ul class="mb-0 ps-3">
+                            @foreach (var e in loiLop)
+                            {
+                                <li>@e.ErrorMessage</li>
+                            }
+                        </ul>
+                    </div>
+                }
+                <input id="timLop" class="form-control form-control-sm mb-2" placeholder="Tìm lớp theo mã, tên, khoa..." />
+                <div id="dsLop" style="max-height: 440px; overflow-y: auto">
+                    @foreach (var g in cacLop.GroupBy(l => l.TenKhoa))
+                    {
+                        <div class="nhom-khoa mb-2">
+                            <div class="d-flex align-items-center small fw-semibold text-muted border-bottom pb-1 mb-1">
+                                <span class="me-auto">@g.Key</span>
+                                <button type="button" class="btn btn-sm btn-link p-0 chon-ca-khoa" disabled="@khoa">Chọn cả khoa</button>
+                            </div>
+                            @foreach (var l in g)
+                            {
+                                <div class="form-check lop" data-tim="@($"{l.MaLop} {l.TenLop} {l.TenKhoa}".ToLower())">
+                                    <input class="form-check-input o-lop" type="checkbox" name="LopIds" value="@l.Id" id="lop@(l.Id)"
+                                           data-si-so="@l.SoSinhVien" checked="@Model.LopIds.Contains(l.Id)" disabled="@khoa" />
+                                    <label class="form-check-label" for="lop@(l.Id)">
+                                        <strong>@l.TenLop</strong> <span class="text-muted small">(@l.MaLop · @l.SoSinhVien SV)</span>
+                                        @if (l.SoSinhVien == 0)
+                                        {
+                                            <span class="badge text-bg-light border text-warning-emphasis">chưa có SV</span>
+                                        }
+                                    </label>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

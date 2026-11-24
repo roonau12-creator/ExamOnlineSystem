@@ -1,0 +1,66 @@
+@using ExamOnlineSystem.Utility
+@{
+    ViewData["Title"] = "Danh sách giảng viên";
+}
+<div class="text-center text-black-50">
+    <h3>Danh sách giảng viên</h3>
+</div>
+
+@if (User.IsInRole(SD.Role_Admin))
+{
+    <div class="text-end mb-3">
+        <a asp-action="Create" class="btn btn-outline-danger"><i class="bi bi-person-plus"></i> Thêm giảng viên</a>
+    </div>
+}
+
+@* Bộ lọc nhanh: lọc trực tiếp trên bảng theo id khoa / bộ môn (giaovien.js) *@
+<div class="row g-2 mb-3">
+    <div class="col-sm-6 col-md-3">
+        <select id="locKhoa" class="form-select" asp-items='ViewData["KhoaList"] as SelectList'>
+            <option value="">-- Tất cả khoa --</option>
+        </select>
+    </div>
+    <div class="col-sm-6 col-md-4">
+        <select id="locBoMon" class="form-select">
+            <option value="">-- Tất cả bộ môn --</option>
+            @foreach (var bm in (List<BoMon>)ViewData["BoMonFilter"]!)
+            {
+                <option value="@bm.Id" data-khoa="@bm.KhoaId" selected="@(bm.Id == (int?)ViewData["BoMonId"])">@bm.TenBoMon</option>
+            }
+        </select>
+    </div>
+    <div class="col-sm-6 col-md-3">
+        <select id="locTrangThai" class="form-select">
+            <option value="">-- Tất cả trạng thái --</option>
+            <option>Đang hoạt động</option>
+            <option>Đã khóa</option>
+        </select>
+    </div>
+</div>
+
+@* data-admin: chỉ Admin mới mở được trang chi tiết bộ môn *@
+<table id="tblGiaoVien" class="table table-bordered table-hover w-100" data-admin="@(User.IsInRole(SD.Role_Admin) ? "true" : "false")">
+    <thead>
+        <tr>
+            <th class="bg-primary text-white-50">Mã GV</th>
+            <th class="bg-primary text-white-50">Họ tên</th>
+            <th class="bg-primary text-white-50">Email</th>
+            <th class="bg-primary text-white-50">Số điện thoại</th>
+            <th class="bg-primary text-white-50">Bộ môn</th>
+            <th class="bg-primary text-white-50">Khoa</th>
+            <th class="bg-primary text-white-50 text-center">Câu hỏi</th>
+            <th class="bg-primary text-white-50 text-center">Đề thi</th>
+            <th class="bg-primary text-white-50 text-center">Trạng thái</th>
+            <th class="bg-primary text-white-50">Đăng nhập gần nhất</th>
+            <th class="bg-primary text-white-50">Chức năng</th>
+        </tr>
+    </thead>
+</table>
+
+<form id="deleteForm" method="post">
+    @Html.AntiForgeryToken()
+</form>
+
+@section Scripts {
+    <script src="~/js/giaovien.js" asp-append-version="true"></script>
+}

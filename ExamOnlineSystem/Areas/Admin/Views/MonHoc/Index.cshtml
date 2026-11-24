@@ -1,0 +1,61 @@
+@model List<MonHoc>
+@{
+    ViewData["Title"] = "Quản lý danh sách môn học";
+}
+<div class="text-center text-black-50">
+    <h3>Quản lý danh sách môn học</h3>
+</div>
+<div class="text-end mb-3">
+    <a asp-action="Import" class="btn btn-outline-success"><i class="bi bi-file-earmark-excel"></i>Nhập từ Excel</a>
+    <a asp-action="Create" class="btn btn-outline-danger"><i class="bi bi-plus-circle"></i>Thêm môn học</a>
+</div>
+<table id="tblMonHoc" class="table table-bordered table-hover w-100">
+    <thead>
+        <tr>
+            <th class="bg-primary text-white-50">Mã môn học</th>
+            <th class="bg-primary text-white-50">Tên môn học</th>
+            <th class="bg-primary text-white-50">Tên tiếng Anh</th>
+            <th class="bg-primary text-white-50">Khoa</th>
+            <th class="bg-primary text-white-50">Bộ môn</th>
+            <th class="bg-primary text-white-50">Hình thức thi</th>
+            <th class="bg-primary text-white-50">Thời gian (phút)</th>
+            <th class="bg-primary text-white-50">STT</th>
+            <th class="bg-primary text-white-50">Trạng thái</th>
+            <th class="bg-primary text-white-50">Chức năng</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.MaMonHoc</td>
+                <td title="@item.MoTa">@item.TenMonHoc</td>
+                <td>@item.TenTiengAnh</td>
+                <td>@item.Khoa?.TenKhoa</td>
+                <td>@item.BoMon?.TenBoMon</td>
+                <td>@item.HinhThucThi</td>
+                <td>@item.ThoiGianThi</td>
+                <td>@item.SoThuTu</td>
+                <td>
+                    <span class="badge @(item.TrangThai == "Hoạt động" ? "bg-success" : "bg-secondary")">@item.TrangThai</span>
+                </td>
+                <td class="text-nowrap">
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-info"><i class="bi bi-pencil-square"></i>Sửa</a>
+                    <button type="button" class="btn btn-success btn-delete"
+                            data-url="@Url.Action("Delete", new { id = item.Id })"
+                            data-name="@item.TenMonHoc">
+                        <i class="bi bi-trash3"></i>Xóa
+                    </button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<form id="deleteForm" method="post">
+    @Html.AntiForgeryToken()
+</form>
+
+@section Scripts {
+    <script src="~/js/monhoc.js" asp-append-version="true"></script>
+}

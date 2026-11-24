@@ -1,0 +1,194 @@
+@using ExamOnlineSystem.Models.ViewModels
+@model SinhVienDetailVM?
+@{
+    ViewData["Title"] = "Kết quả thi của tôi";
+}
+
+@* Layout công khai không bọc nội dung trong container -> tự bọc để có lề, không tràn ngang *@
+<div class="container-xl py-4">
+    <h3 class="text-black-50 mb-3"><i class="bi bi-award"></i> Kết quả thi của tôi</h3>
+
+    @if (Model == null)
+    {
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle"></i> Tài khoản của bạn chưa được gắn với hồ sơ sinh viên nào.
+            Vui lòng liên hệ phòng đào tạo.
+        </div>
+    }
+    else
+    {
+        var sv = Model.SinhVien;
+        var coDiem = Model.LichThis.Where(l => l.DiemHe10.HasValue).ToList();
+
+        <div class="card shadow-sm mb-3">
+            <div class="card-body py-3">
+                <div class="fw-semibold fs-5">@sv.HoTen</div>
+                <div class="text-muted small">
+                    Mã SV: @sv.MaSinhVien · Lớp: @(sv.Lop?.MaLop ?? "—") · @(sv.Khoa?.TenKhoa ?? "")
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-lg-3">
+                <div class="card border-primary h-100"><div class="card-body py-2">
+                    <div class="text-muted small">Lịch thi</div>
+                    <div class="fs-4 fw-bold text-primary">@Model.LichThis.Count</div>
+                </div></div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="card border-primary h-100"><div class="card-body py-2">
+                    <div class="text-muted small">Đã có điểm</div>
+                    <div class="fs-4 fw-bold text-primary">@coDiem.Count</div>
+                </div></div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="card border-success h-100"><div class="card-body py-2">
+                    <div class="text-muted small">Điểm trung bình (thang 10)</div>
+                    <div class="fs-4 fw-bold text-success">@(coDiem.Count > 0 ? coDiem.Average(l => l.DiemHe10!.Value).ToString("0.00") : "—")</div>
+                </div></div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="card border-success h-100"><div class="card-body py-2">
+                    <div class="text-muted small">Cao nhất</div>
+                    <div class="fs-4 fw-bold text-success">@(coDiem.Count > 0 ? coDiem.Max(l => l.DiemHe10!.Value).ToString("0.00") : "—")</div>
+                </div></div>
+            </div>
+        </div>
+
+        @* ===== Kết quả theo từng lịch thi ===== *@
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-calendar-check"></i> Kết quả theo lịch thi</h5>
+            </div>
+            <div class="card-body">
+                @if (Model.LichThis.Count == 0)
+                {
+                    <p class="text-muted mb-0"><i class="bi bi-info-circle"></i> Bạn chưa có trong lịch thi nào.</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="bg-primary text-white-50">Lịch thi</th>
+                                    <th class="bg-primary text-white-50">Thời gian</th>
+                                    <th class="bg-primary text-white-50 text-center">Trạng thái</th>
+                                    <th class="bg-primary text-white-50 text-center">Điểm</th>
+                                    <th class="bg-primary text-white-50 text-center">Xếp loại</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var lt in Model.LichThis)
+                                {
+                                    var xepLoai = KetQuaLabel.XepLoai(lt.DiemHe10);
+                                    <tr>
+                                        <td>
+                                            <a asp-controller="LichThi" asp-action="ChiTiet" asp-route-id="@lt.LichThiId" class="fw-semibold text-decoration-none">@lt.TenLichThi</a>
+                                            <div class="small text-muted">@lt.TenDeThi</div>
+                                        </td>
+                                        <td class="text-nowrap small">
+                                            @lt.ThoiGianBatDau.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                            – @lt.ThoiGianKetThuc.ToLocalTime().ToString("HH:mm")
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge text-bg-@KetQuaLabel.MauTrangThai(lt.TrangThai)">@KetQuaLabel.TenTrangThai(lt.TrangThai)</span>
+                                            @if (lt.SoLuotThi > 1)
+                                            {
+                                                <div class="small text-muted">@lt.SoLuotThi lượt</div>
+                                            }
+                                        </td>
+                                        <td class="text-center text-nowrap">
+                                            @if (lt.Diem.HasValue)
+                                            {
+                                                <span class="fw-semibold">@lt.Diem.Value.ToString("0.##")</span><span class="text-muted">/@lt.TongDiem.ToString("0.##")</span>
+                                                <div class="small text-muted">@lt.DiemHe10!.Value.ToString("0.00") / 10</div>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">—</span>
+                                            }
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge text-bg-@KetQuaLabel.MauXepLoai(xepLoai)">@xepLoai</span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+
+        @* ===== Lịch sử làm bài ===== *@
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-clock-history"></i> Lịch sử làm bài <span class="badge text-bg-secondary">@Model.LanThis.Count lượt</span></h5>
+            </div>
+            <div class="card-body">
+                @if (Model.LanThis.Count == 0)
+                {
+                    <p class="text-muted mb-0"><i class="bi bi-info-circle"></i> Bạn chưa làm bài thi nào.</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="bg-primary text-white-50">Lịch thi</th>
+                                    <th class="bg-primary text-white-50 text-center">Lần</th>
+                                    <th class="bg-primary text-white-50">Bắt đầu</th>
+                                    <th class="bg-primary text-white-50">Nộp bài</th>
+                                    <th class="bg-primary text-white-50 text-center">Thời gian làm</th>
+                                    <th class="bg-primary text-white-50 text-center">Trạng thái</th>
+                                    <th class="bg-primary text-white-50 text-center">Điểm</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var lan in Model.LanThis)
+                                {
+                                    var mauLan = lan.TrangThai switch { 1 => "success", 2 => "danger", _ => "warning" };
+                                    <tr>
+                                        <td>
+                                            <span class="fw-semibold">@lan.TenLichThi</span>
+                                            <div class="small text-muted">@lan.TenMonHoc</div>
+                                        </td>
+                                        <td class="text-center">@lan.LanThu</td>
+                                        <td class="text-nowrap small">@lan.ThoiGianBatDau.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td class="text-nowrap small">@(lan.ThoiGianNopBai?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "—")</td>
+                                        <td class="text-center text-nowrap small">
+                                            @if (lan.ThoiGianLam is { } tg)
+                                            {
+                                                <span>@((int)tg.TotalMinutes) phút @tg.Seconds giây</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">—</span>
+                                            }
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge text-bg-@mauLan">@KetQuaLabel.TenTrangThaiLanThi(lan.TrangThai)</span>
+                                        </td>
+                                        <td class="text-center text-nowrap">
+                                            @if (lan.Diem.HasValue)
+                                            {
+                                                <span class="fw-semibold">@lan.Diem.Value.ToString("0.##")</span><span class="text-muted">/@lan.TongDiem.ToString("0.##")</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">—</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>

@@ -1,0 +1,414 @@
+@using ExamOnlineSystem.Models.ViewModels
+@model ExamOnlineSystem.Areas.Admin.Models.LichThiChiTietVM
+@{
+    var lt = Model.LichThi;
+    ViewData["Title"] = "Chi tiết lịch thi " + lt.TenLichThi;
+
+    var batDau = lt.ThoiGianBatDau.ToLocalTime();
+    var ketThuc = lt.ThoiGianKetThuc.ToLocalTime();
+    var cungNgay = batDau.Date == ketThuc.Date;
+
+    var mau = Model.TrangThai == TrangThaiLichThi.SapDienRa ? "info"
+            : Model.TrangThai == TrangThaiLichThi.DangDienRa ? "success"
+            : "secondary";
+
+    // "1 giờ 20 phút", "2 ngày"
+    string ConLai(int phut)
+    {
+        if (phut >= 1440) return $"{phut / 1440} ngày" + (phut % 1440 >= 60 ? $" {phut % 1440 / 60} giờ" : "");
+        if (phut >= 60) return $"{phut / 60} giờ" + (phut % 60 > 0 ? $" {phut % 60} phút" : "");
+        return $"{Math.Max(phut, 0)} phút";
+    }
+
+    var ghiChuTrangThai = Model.TrangThai == TrangThaiLichThi.SapDienRa ? "Bắt đầu sau " + ConLai(Model.ConLaiPhut)
+                        : Model.TrangThai == TrangThaiLichThi.DangDienRa ? "Còn " + ConLai(Model.ConLaiPhut) + " nữa kết thúc"
+                        : "Kết thúc lúc " + ketThuc.ToString("dd/MM/yyyy HH:mm");
+
+    // Tiến độ khung giờ thi (%)
+    var tongPhut = Math.Max((lt.ThoiGianKetThuc - lt.ThoiGianBatDau).TotalMinutes, 1);
+    var daQua = (DateTime.UtcNow - lt.ThoiGianBatDau).TotalMinutes;
+    var tienDo = (int)Math.Clamp(daQua / tongPhut * 100, 0, 100);
+
+    var soNam = Model.SinhViens.Count(s => s.GioiTinh);
+    var soNu = Model.SinhViens.Count - soNam;
+}
+
+@Html.AntiForgeryToken()
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h3 class="text-black-50 mb-0">
+        <i class="bi bi-calendar-event"></i> Chi tiết lịch thi
+        <span class="badge fs-6 align-middle text-bg-@mau">@Model.TrangThai</span>
+    </h3>
+    <div class="d-flex gap-2">
+        @if (Model.SuaDuoc)
+        {
+            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalThoiGian">
+                <i class="bi bi-clock-history"></i> Thiết lập thời gian
+            </button>
+            <a asp-action="Edit" asp-route-id="@lt.Id" class="btn btn-primary"><i class="bi bi-pencil-square"></i> Sửa</a>
+        }
+        @if (Model.XoaDuoc)
+        {
+            <button type="button" id="btnXoaLichThi" class="btn btn-outline-danger"
+                    data-id="@lt.Id" data-ten="@lt.TenLichThi">
+                <i class="bi bi-trash3"></i> Xóa
+            </button>
+        }
+        <a asp-action="Index" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Quay lại danh sách</a>
+    </div>
+</div>
+
+@* Thống kê nhanh *@
+<div class="row g-3 mb-3">
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-@mau h-100"><div class="card-body py-2">
+            <div class="text-muted small">Trạng thái</div>
+            <div class="fs-5 fw-bold text-@mau">@Model.TrangThai</div>
+            <div class="small text-muted">@ghiChuTrangThai</div>
+        </div></div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-primary h-100"><div class="card-body py-2">
+            <div class="text-muted small">Khung giờ thi</div>
+            <div class="fs-5 fw-bold text-primary">@Model.KhungGioPhut phút</div>
+            <div class="small text-muted">Làm bài @(lt.DeThi?.ThoiLuong ?? 0) phút</div>
+        </div></div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-warning h-100"><div class="card-body py-2">
+            <div class="text-muted small">Lớp tham gia</div>
+            <div class="fs-5 fw-bold text-warning">@Model.Lops.Count lớp</div>
+        </div></div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-danger h-100"><div class="card-body py-2">
+            <div class="text-muted small">Sinh viên dự thi</div>
+            <div class="fs-5 fw-bold text-danger">@Model.SinhViens.Count sinh viên</div>
+            <div class="small text-muted">@soNam nam, @soNu nữ · Đã nộp @Model.SinhViens.Count(s => s.TrangThai == 2)</div>
+        </div></div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    @* Thông tin lịch thi *@
+    <div class="col-lg-7">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-calendar-check"></i> @lt.TenLichThi</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Thời gian bắt đầu</dt>
+                    <dd class="col-sm-8">@batDau.ToString("dddd, dd/MM/yyyy HH:mm", new System.Globalization.CultureInfo("vi-VN"))</dd>
+
+                    <dt class="col-sm-4">Thời gian kết thúc</dt>
+                    <dd class="col-sm-8">
+                        @(cungNgay ? ketThuc.ToString("HH:mm") + " (cùng ngày)" : ketThuc.ToString("dddd, dd/MM/yyyy HH:mm", new System.Globalization.CultureInfo("vi-VN")))
+                    </dd>
+
+                    <dt class="col-sm-4">Tiến độ</dt>
+                    <dd class="col-sm-8">
+                        <div class="progress" role="progressbar" aria-valuenow="@tienDo" aria-valuemin="0" aria-valuemax="100" style="height: 1.25rem;">
+                            <div class="progress-bar bg-@mau @(Model.TrangThai == TrangThaiLichThi.DangDienRa ? "progress-bar-striped progress-bar-animated" : "")"
+                                 style="width: @tienDo%">@tienDo%</div>
+                        </div>
+                    </dd>
+
+                    <dt class="col-sm-4">Giảng viên phụ trách</dt>
+                    <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.TenGiaoVien) ? "—" : Model.TenGiaoVien)</dd>
+
+                    <dt class="col-sm-4">Ghi chú</dt>
+                    <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(lt.GhiChu) ? "—" : lt.GhiChu)</dd>
+
+                    <dt class="col-sm-4">Ngày tạo</dt>
+                    <dd class="col-sm-8 mb-0">@lt.NgayTao.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    @* Thông tin đề thi *@
+    <div class="col-lg-5">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-file-earmark-text"></i> Đề thi</h5>
+                @if (lt.DeThi != null)
+                {
+                    <div class="d-flex gap-1">
+                        <a asp-controller="DeThi" asp-action="Details" asp-route-id="@lt.DeThiId" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-box-arrow-up-right"></i> Chi tiết đề
+                        </a>
+                        <a asp-controller="DeThi" asp-action="XemTruoc" asp-route-id="@lt.DeThiId" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-eye"></i> Xem trước
+                        </a>
+                    </div>
+                }
+            </div>
+            <div class="card-body">
+                @if (lt.DeThi == null)
+                {
+                    <p class="text-muted mb-0"><i class="bi bi-exclamation-circle"></i> Không tìm thấy thông tin đề thi.</p>
+                }
+                else
+                {
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5">Mã đề</dt>
+                        <dd class="col-sm-7">@lt.DeThi.MaDeThi</dd>
+
+                        <dt class="col-sm-5">Tên đề</dt>
+                        <dd class="col-sm-7">@lt.DeThi.TenDeThi</dd>
+
+                        <dt class="col-sm-5">Môn học</dt>
+                        <dd class="col-sm-7">@(string.IsNullOrWhiteSpace(Model.TenMonHoc) ? "—" : Model.TenMonHoc)</dd>
+
+                        <dt class="col-sm-5">Thời gian làm bài</dt>
+                        <dd class="col-sm-7">@lt.DeThi.ThoiLuong phút</dd>
+
+                        <dt class="col-sm-5">Tổng điểm</dt>
+                        <dd class="col-sm-7 mb-0">@lt.DeThi.TongDiem.ToString("0.##")</dd>
+                    </dl>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Lớp tham gia *@
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white">
+        <h5 class="mb-0"><i class="bi bi-people"></i> Lớp tham gia (@Model.Lops.Count)</h5>
+    </div>
+    <div class="card-body">
+        @if (Model.Lops.Count == 0)
+        {
+            <p class="text-muted mb-0"><i class="bi bi-info-circle"></i> Lịch thi chưa có lớp nào.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th class="bg-primary text-white-50 text-center">STT</th>
+                            <th class="bg-primary text-white-50">Mã lớp</th>
+                            <th class="bg-primary text-white-50">Tên lớp</th>
+                            <th class="bg-primary text-white-50">Khoa</th>
+                            <th class="bg-primary text-white-50 text-center">Sĩ số</th>
+                            <th class="bg-primary text-white-50"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (var i = 0; i < Model.Lops.Count; i++)
+                        {
+                            var lop = Model.Lops[i];
+                            <tr>
+                                <td class="text-center">@(i + 1)</td>
+                                <td>@lop.MaLop</td>
+                                <td>@lop.TenLop</td>
+                                <td>@(string.IsNullOrWhiteSpace(lop.TenKhoa) ? "—" : lop.TenKhoa)</td>
+                                <td class="text-center">@lop.SoSinhVien</td>
+                                <td class="text-center">
+                                    <a asp-controller="Lop" asp-action="Details" asp-route-id="@lop.Id" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i> Xem lớp
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@* Danh sách sinh viên dự thi *@
+<div class="card shadow-sm">
+    <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <h5 class="mb-0"><i class="bi bi-person-lines-fill"></i> Danh sách sinh viên dự thi (@Model.SinhViens.Count)</h5>
+        <div class="d-flex flex-wrap gap-2">
+            <select id="locTrangThaiSv" class="form-select form-select-sm w-auto">
+                <option value="">-- Tất cả trạng thái --</option>
+                <option value="Chưa thi">Chưa thi</option>
+                <option value="Đang làm bài">Đang làm bài</option>
+                <option value="Đã nộp bài">Đã nộp bài</option>
+            </select>
+            @if (Model.Lops.Count > 1)
+            {
+                <select id="locLopSv" class="form-select form-select-sm w-auto">
+                    <option value="">-- Tất cả lớp --</option>
+                    @foreach (var lop in Model.Lops)
+                    {
+                        <option value="@lop.MaLop">@lop.MaLop - @lop.TenLop</option>
+                    }
+                </select>
+            }
+        </div>
+    </div>
+    <div class="card-body">
+        @if (Model.SinhViens.Count == 0)
+        {
+            <p class="text-muted mb-0"><i class="bi bi-info-circle"></i> Chưa có sinh viên nào trong các lớp tham gia.</p>
+        }
+        else
+        {
+            <table id="tblSinhVienDuThi" class="table table-bordered table-hover align-middle w-100">
+                <thead>
+                    <tr>
+                        <th class="bg-primary text-white-50 text-center">STT</th>
+                        <th class="bg-primary text-white-50">Mã sinh viên</th>
+                        <th class="bg-primary text-white-50">Họ tên</th>
+                        <th class="bg-primary text-white-50">Ngày sinh</th>
+                        <th class="bg-primary text-white-50">Giới tính</th>
+                        <th class="bg-primary text-white-50">Lớp</th>
+                        <th class="bg-primary text-white-50">Email</th>
+                        <th class="bg-primary text-white-50">Số điện thoại</th>
+                        <th class="bg-primary text-white-50 text-center">Trạng thái</th>
+                        <th class="bg-primary text-white-50 text-center">Bắt đầu</th>
+                        <th class="bg-primary text-white-50 text-center">Nộp bài</th>
+                        <th class="bg-primary text-white-50 text-center">Điểm</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (var i = 0; i < Model.SinhViens.Count; i++)
+                    {
+                        var sv = Model.SinhViens[i];
+                        var (ttNhan, ttMau) = sv.TrangThai switch
+                        {
+                            1 => ("Đang làm bài", "warning"),
+                            2 => ("Đã nộp bài", "success"),
+                            _ => ("Chưa thi", "secondary")
+                        };
+                        <tr>
+                            <td class="text-center">@(i + 1)</td>
+                            <td>@sv.MaSinhVien</td>
+                            <td>@sv.HoTen</td>
+                            <td data-order="@sv.NgaySinh.ToString("yyyyMMdd")">@sv.NgaySinh.ToString("dd/MM/yyyy")</td>
+                            @* GioiTinh: true = Nam, false = Nữ *@
+                            <td>@(sv.GioiTinh ? "Nam" : "Nữ")</td>
+                            <td>@sv.MaLop</td>
+                            <td>@sv.Email</td>
+                            <td>@sv.SoDienThoai</td>
+                            <td class="text-center"><span class="badge text-bg-@ttMau">@ttNhan</span></td>
+                            <td class="text-center">@(sv.ThoiGianBatDau.HasValue ? sv.ThoiGianBatDau.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm") : "—")</td>
+                            <td class="text-center">@(sv.ThoiGianNopBai.HasValue ? sv.ThoiGianNopBai.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm") : "—")</td>
+                            <td class="text-center fw-semibold">@(sv.Diem.HasValue ? sv.Diem.Value.ToString("0.##") : "—")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
+
+@if (Model.SuaDuoc)
+{
+    var dangDienRa = Model.TrangThai == TrangThaiLichThi.DangDienRa;
+    var gioList = Enumerable.Range(0, 24).Select(h => h.ToString("00")).ToList();
+    var phutList = Enumerable.Range(0, 12).Select(m => (m * 5).ToString("00")).ToList();
+    // Giữ phút hiện tại nếu không chia hết cho 5
+    foreach (var p in new[] { batDau.Minute, ketThuc.Minute }.Where(p => p % 5 != 0).Select(p => p.ToString("00")))
+    {
+        if (!phutList.Contains(p)) phutList.Add(p);
+    }
+    phutList.Sort();
+
+    @* Modal thiết lập ngày giờ bắt đầu / kết thúc (lichthi-chitiet.js) *@
+    <div class="modal fade" id="modalThoiGian" tabindex="-1" aria-labelledby="modalThoiGianLabel" aria-hidden="true"
+         data-id="@lt.Id" data-thoi-luong="@(lt.DeThi?.ThoiLuong ?? 0)" data-dang-dien-ra="@(dangDienRa ? "1" : "0")">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="modalThoiGianLabel"><i class="bi bi-clock-history"></i> Thiết lập thời gian thi</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                </div>
+                <div class="modal-body">
+                    @if (dangDienRa)
+                    {
+                        <div class="alert alert-warning py-2">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            Lịch thi <strong>đang diễn ra</strong>: ngày giờ bắt đầu bị khóa, chỉ có thể thay đổi giờ kết thúc
+                            (phải sau thời điểm hiện tại).
+                        </div>
+                    }
+                    <div id="tgLoi" class="alert alert-danger py-2 d-none"></div>
+
+                    @foreach (var (ma, nhan, gt, khoaO) in new[] { ("bd", "Bắt đầu", batDau, dangDienRa), ("kt", "Kết thúc", ketThuc, false) })
+                    {
+                        <fieldset class="border rounded p-3 mb-3" disabled="@khoaO">
+                            <legend class="float-none w-auto px-2 fs-6 fw-semibold mb-0">
+                                <i class="bi @(ma == "bd" ? "bi-play-circle" : "bi-stop-circle")"></i> @nhan
+                            </legend>
+                            <div class="row g-2 align-items-end">
+                                <div class="col-sm-6">
+                                    <label class="form-label small mb-1" for="@(ma)Ngay">Ngày (dd/MM/yyyy)</label>
+                                    <div class="input-group position-relative">
+                                        <input type="text" id="@(ma)Ngay" class="form-control tg-ngay" inputmode="numeric" maxlength="10"
+                                               placeholder="dd/MM/yyyy" autocomplete="off" value="@gt.ToString("dd/MM/yyyy")" />
+                                        <button type="button" class="btn btn-outline-secondary tg-lich" data-for="@(ma)Ngay" title="Chọn ngày trên lịch">
+                                            <i class="bi bi-calendar3"></i>
+                                        </button>
+                                        @* Bộ chọn ngày gốc của trình duyệt, chỉ dùng để mở lịch *@
+                                        <input type="date" class="tg-lich-goc" data-for="@(ma)Ngay" tabindex="-1" aria-hidden="true"
+                                               style="position:absolute; right:0; bottom:0; width:1px; height:1px; opacity:0; pointer-events:none;" />
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <label class="form-label small mb-1" for="@(ma)Gio">Giờ (24 giờ)</label>
+                                    <div class="input-group">
+                                        <select id="@(ma)Gio" class="form-select tg-gio">
+                                            @foreach (var h in gioList)
+                                            {
+                                                <option value="@h" selected="@(h == gt.ToString("HH"))">@h</option>
+                                            }
+                                        </select>
+                                        <span class="input-group-text">:</span>
+                                        <select id="@(ma)Phut" class="form-select tg-phut">
+                                            @foreach (var m in phutList)
+                                            {
+                                                <option value="@m" selected="@(m == gt.ToString("mm"))">@m</option>
+                                            }
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-flex flex-wrap gap-1 mt-2">
+                                @if (ma == "bd")
+                                {
+                                    <span class="small text-muted me-1 align-self-center">Chọn nhanh:</span>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary tg-ngay-nhanh" data-cong="0">Hôm nay</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary tg-ngay-nhanh" data-cong="1">Ngày mai</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary tg-ngay-nhanh" data-cong="7">+1 tuần</button>
+                                    <span class="vr mx-1"></span>
+                                    @foreach (var (ca, gio) in new[] { ("Ca 1", "07:30"), ("Ca 2", "09:30"), ("Ca 3", "13:30"), ("Ca 4", "15:30") })
+                                    {
+                                        <button type="button" class="btn btn-sm btn-outline-primary tg-ca" data-gio="@gio">@ca (@gio)</button>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="small text-muted me-1 align-self-center">Đặt theo bắt đầu:</span>
+                                    <button type="button" class="btn btn-sm btn-outline-primary tg-kt-cong" data-phut="0">
+                                        + thời gian làm bài (@(lt.DeThi?.ThoiLuong ?? 0) phút)
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary tg-kt-cong" data-phut="15">+ làm bài + 15 phút</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary tg-kt-cong" data-phut="30">+ làm bài + 30 phút</button>
+                                }
+                            </div>
+                        </fieldset>
+                    }
+
+                    <div id="tgTomTat" class="small"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="bi bi-x-circle"></i> Hủy</button>
+                    <button type="button" class="btn btn-primary" id="btnLuuThoiGian"><i class="bi bi-check-circle"></i> Lưu thời gian</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script src="~/js/lichthi-chitiet.js" asp-append-version="true"></script>
+}

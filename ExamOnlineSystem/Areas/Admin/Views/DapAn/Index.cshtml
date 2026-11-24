@@ -1,0 +1,56 @@
+@{
+    ViewData["Title"] = "Danh sách đáp án";
+}
+<div class="text-center text-black-50">
+    <h3>Danh sách đáp án</h3>
+</div>
+
+<div class="text-end mb-3">
+    <a asp-action="Import" class="btn btn-outline-success"><i class="bi bi-file-earmark-excel"></i>Nhập từ Excel</a>
+    <a asp-action="Create" class="btn btn-outline-danger"><i class="bi bi-plus-circle"></i>Thêm đáp án</a>
+</div>
+
+<div class="alert alert-light border small">
+    <i class="bi bi-info-circle"></i>
+    Đáp án thuộc các câu hỏi trắc nghiệm. Để đổi thứ tự đáp án, dùng <strong>Sửa câu hỏi</strong> (mở từ nút <strong>Câu hỏi</strong>).
+</div>
+
+@* Bộ lọc nhanh: lọc trực tiếp trên bảng (dapan.js) *@
+<div class="row g-2 mb-3">
+    <div class="col-sm-6 col-md-3">
+        <select id="locMonHoc" class="form-select">
+            <option value="">-- Tất cả môn học --</option>
+        </select>
+    </div>
+    <div class="col-sm-6 col-md-3">
+        <select id="locDung" class="form-select">
+            <option value="">-- Đúng và sai --</option>
+            <option value="Đúng">Chỉ đáp án đúng</option>
+            <option value="Sai">Chỉ đáp án sai</option>
+        </select>
+    </div>
+</div>
+
+<table id="tblDapAn" class="table table-bordered table-hover w-100">
+    <thead>
+        <tr>
+            <th class="bg-primary text-white-50">Câu hỏi</th>
+            <th class="bg-primary text-white-50">Danh mục</th>
+            <th class="bg-primary text-white-50">Môn học</th>
+            <th class="bg-primary text-white-50 text-center">Đáp án</th>
+            <th class="bg-primary text-white-50">Nội dung đáp án</th>
+            <th class="bg-primary text-white-50 text-center">Đúng/Sai</th>
+            <th class="bg-primary text-white-50">Giảng viên</th>
+            <th class="bg-primary text-white-50">Chức năng</th>
+        </tr>
+    </thead>
+</table>
+
+<form id="deleteForm" method="post">
+    @Html.AntiForgeryToken()
+</form>
+
+@section Scripts {
+    <script src="~/js/dapan.js" asp-append-version="true"></script>
+    <script src="~/js/dapan-xoa.js" asp-append-version="true"></script>
+}

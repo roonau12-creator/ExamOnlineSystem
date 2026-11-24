@@ -1,0 +1,40 @@
+@model NamHoc
+@* Các trường nhập liệu dùng chung cho Thêm / Sửa năm học *@
+<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+<div class="mb-3">
+    <label asp-for="MaNamHoc" class="form-label"></label>
+    <input asp-for="MaNamHoc" class="form-control" placeholder="Ví dụ: 2025-2026" />
+    <span asp-validation-for="MaNamHoc" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="TenNamHoc" class="form-label"></label>
+    <input asp-for="TenNamHoc" class="form-control" placeholder="Ví dụ: Năm học 2025 - 2026" />
+    <span asp-validation-for="TenNamHoc" class="text-danger"></span>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <label asp-for="NgayBatDau" class="form-label"></label>
+        <input asp-for="NgayBatDau" type="date" class="form-control" />
+        <span asp-validation-for="NgayBatDau" class="text-danger"></span>
+    </div>
+    <div class="col-md-6 mb-3">
+        <label asp-for="NgayKetThuc" class="form-label"></label>
+        <input asp-for="NgayKetThuc" type="date" class="form-control" />
+        <span asp-validation-for="NgayKetThuc" class="text-danger"></span>
+    </div>
+</div>
+
+<div class="mb-3">
+    <label asp-for="GhiChu" class="form-label"></label>
+    <textarea asp-for="GhiChu" class="form-control" rows="2" placeholder="Ghi chú (không bắt buộc)"></textarea>
+    <span asp-validation-for="GhiChu" class="text-danger"></span>
+</div>
+
+<div class="form-check mb-3">
+    <input asp-for="LaNamHienTai" class="form-check-input" />
+    <label asp-for="LaNamHienTai" class="form-check-label"></label>
+    <div class="form-text">Chỉ một năm học được là năm hiện tại – chọn ô này sẽ bỏ dấu ở năm học khác.</div>
+</div>

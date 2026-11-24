@@ -1,0 +1,44 @@
+@model ExamOnlineSystem.Models.ViewModels.GiaoVienFormVM
+@* Các ô dùng chung cho form Thêm / Sửa giảng viên (phần mật khẩu nằm ở từng view) *@
+<h6 class="text-uppercase text-muted small fw-bold mb-3">Thông tin giảng viên</h6>
+<div class="row g-3 mb-4">
+    <div class="col-md-5">
+        <label asp-for="MaGiaoVien" class="form-label"></label>
+        <input asp-for="MaGiaoVien" class="form-control" placeholder="Ví dụ: GV012" />
+        <span asp-validation-for="MaGiaoVien" class="text-danger"></span>
+    </div>
+    <div class="col-md-7">
+        <label asp-for="HoTen" class="form-label"></label>
+        <input asp-for="HoTen" class="form-control" placeholder="Ví dụ: Nguyễn Văn An" />
+        <span asp-validation-for="HoTen" class="text-danger"></span>
+    </div>
+    <div class="col-md-7">
+        <label asp-for="BoMonId" class="form-label"></label>
+        <select asp-for="BoMonId" asp-items='ViewData["BoMonSelect"] as List<SelectListItem>' class="form-select">
+            <option value="0">-- Chọn bộ môn --</option>
+        </select>
+        <div class="form-text">Khoa của giảng viên được lấy theo khoa của bộ môn.</div>
+        <span asp-validation-for="BoMonId" class="text-danger"></span>
+    </div>
+    <div class="col-md-5">
+        <label asp-for="ChucDanh" class="form-label"></label>
+        <input asp-for="ChucDanh" class="form-control" list="dsChucDanh" placeholder="Giảng viên" />
+        <datalist id="dsChucDanh">
+            @foreach (var cd in ExamOnlineSystem.Models.ViewModels.GiaoVienFormVM.GoiYChucDanh)
+            {
+                <option value="@cd"></option>
+            }
+        </datalist>
+        <span asp-validation-for="ChucDanh" class="text-danger"></span>
+    </div>
+    <div class="col-md-7">
+        <label asp-for="Email" class="form-label"></label>
+        <input asp-for="Email" type="email" class="form-control" placeholder="giaovien@examonline.vn" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+    <div class="col-md-5">
+        <label asp-for="SoDienThoai" class="form-label"></label>
+        <input asp-for="SoDienThoai" class="form-control" placeholder="0901234567" />
+        <span asp-validation-for="SoDienThoai" class="text-danger"></span>
+    </div>
+</div>

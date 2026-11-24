@@ -1,0 +1,106 @@
+@model ExamOnlineSystem.Models.ViewModels.UserEditVM
+@{
+    ViewData["Title"] = "Sửa tài khoản";
+    var hoSo = Model.MaSinhVien != null ? $"Sinh viên {Model.MaSinhVien}"
+             : Model.MaGiaoVien != null ? $"Giảng viên {Model.MaGiaoVien}"
+             : null;
+}
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-xl-7">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h4 class="mb-0"><i class="bi bi-pencil-square"></i> Sửa tài khoản</h4>
+                @if (Model.DangHoatDong)
+                {
+                    <span class="badge text-bg-success">Đang hoạt động</span>
+                }
+                else
+                {
+                    <span class="badge text-bg-secondary"><i class="bi bi-lock-fill"></i> Đã khóa</span>
+                }
+            </div>
+            <div class="card-body">
+                <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <input type="hidden" asp-for="Id" />
+
+                    <h6 class="text-uppercase text-muted small fw-bold mb-3">Thông tin người dùng</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-7">
+                            <label asp-for="HoTen" class="form-label"></label>
+                            <input asp-for="HoTen" class="form-control" />
+                            @if (hoSo != null)
+                            {
+                                <div class="form-text">Họ tên sẽ được cập nhật sang hồ sơ @hoSo.</div>
+                            }
+                            <span asp-validation-for="HoTen" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-5">
+                            <label asp-for="SoDienThoai" class="form-label"></label>
+                            <input asp-for="SoDienThoai" class="form-control" placeholder="0901234567" />
+                            <span asp-validation-for="SoDienThoai" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="ChucDanh" class="form-label"></label>
+                            <input asp-for="ChucDanh" class="form-control" />
+                            <span asp-validation-for="ChucDanh" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="KhoaId" class="form-label"></label>
+                            <select asp-for="KhoaId" asp-items='ViewData["KhoaSelect"] as List<SelectListItem>' class="form-select">
+                                <option value="0">-- Không gắn khoa --</option>
+                            </select>
+                            <span asp-validation-for="KhoaId" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <h6 class="text-uppercase text-muted small fw-bold mb-3">Tài khoản đăng nhập</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-7">
+                            <label asp-for="Email" class="form-label"></label>
+                            <input asp-for="Email" type="email" class="form-control" />
+                            <div class="form-text">Đổi email cũng là đổi tên đăng nhập, các phiên đăng nhập cũ sẽ bị đăng xuất.</div>
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-5">
+                            <label asp-for="MatKhauMoi" class="form-label"></label>
+                            <input asp-for="MatKhauMoi" class="form-control" autocomplete="new-password" />
+                            <div class="form-text">Để trống nếu không đổi mật khẩu.</div>
+                            <span asp-validation-for="MatKhauMoi" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-7">
+                            <label asp-for="VaiTro" class="form-label"></label>
+                            <select asp-for="VaiTro" asp-items='ViewData["VaiTroSelect"] as List<SelectListItem>' class="form-select">
+                                <option value="">-- Chọn vai trò --</option>
+                            </select>
+                            <div class="form-text">Đổi vai trò sẽ đăng xuất tài khoản khỏi các phiên đang mở.</div>
+                            <span asp-validation-for="VaiTro" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    @if (hoSo != null)
+                    {
+                        <div class="alert alert-warning small">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            Tài khoản này đang gắn với hồ sơ <strong>@hoSo</strong>. Đổi vai trò có thể làm
+                            hồ sơ đó không còn dùng được đúng chức năng.
+                        </div>
+                    }
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Lưu
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Hủy
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

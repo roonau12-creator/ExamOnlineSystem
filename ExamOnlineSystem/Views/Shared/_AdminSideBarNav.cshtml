@@ -1,0 +1,111 @@
+@using ExamOnlineSystem.Utility
+@* Menu bên trái của khu vực quản trị (Area Admin). Ẩn menu chưa đủ bảo mật – controller vẫn phải gắn [Authorize]. *@
+@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    string Active(params string[] ds) =>
+        ds.Contains(controller, StringComparer.OrdinalIgnoreCase) ? "active" : "";
+
+    // Dùng cho controller có nhiều mục menu (vd ThongKe): chỉ sáng khi khớp cả action
+    var action = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+    string ActiveHanhDong(string ctrl, params string[] dsAction) =>
+        string.Equals(ctrl, controller, StringComparison.OrdinalIgnoreCase) &&
+        dsAction.Contains(action, StringComparer.OrdinalIgnoreCase) ? "active" : "";
+
+    var laQuanTri = User.IsInRole(SD.Role_Admin);
+}
+
+<nav class="admin-sidebar nav flex-column nav-pills p-3 gap-1">
+    <small class="text-uppercase text-white-50 fw-bold px-2 mb-1" style="font-size:11px">Tổng quan</small>
+    <a class="nav-link text-white" asp-area="Customer" asp-controller="Home" asp-action="Index">
+        <i class="bi bi-house me-2"></i>Trang chủ
+    </a>
+
+    <small class="text-uppercase text-white-50 fw-bold px-2 mt-3 mb-1" style="font-size:11px">Danh mục</small>
+    @if (laQuanTri)
+    {
+        <a class="nav-link text-white @Active("Khoa")" asp-area="Admin" asp-controller="Khoa" asp-action="Index">
+            <i class="bi bi-building me-2"></i>Khoa
+        </a>
+        <a class="nav-link text-white @Active("NamHoc")" asp-area="Admin" asp-controller="NamHoc" asp-action="Index">
+            <i class="bi bi-calendar3 me-2"></i>Năm học
+        </a>
+    }
+    <a class="nav-link text-white @Active("BoMon")" asp-area="Admin" asp-controller="BoMon" asp-action="Index">
+        <i class="bi bi-diagram-3 me-2"></i>Bộ môn
+    </a>
+    <a class="nav-link text-white @Active("MonHoc")" asp-area="Admin" asp-controller="MonHoc" asp-action="Index">
+        <i class="bi bi-journal-bookmark me-2"></i>Môn học
+    </a>
+    <a class="nav-link text-white @Active("HocPhan")" asp-area="Admin" asp-controller="HocPhan" asp-action="Index">
+        <i class="bi bi-collection me-2"></i>Học phần
+    </a>
+    <a class="nav-link text-white @Active("Lop")" asp-area="Admin" asp-controller="Lop" asp-action="Index">
+        <i class="bi bi-people me-2"></i>Lớp
+    </a>
+    <a class="nav-link text-white @Active("LopHocPhan")" asp-area="Admin" asp-controller="LopHocPhan" asp-action="Index">
+        <i class="bi bi-person-check me-2"></i>Lớp học phần
+    </a>
+    <a class="nav-link text-white @Active("SinhVien")" asp-area="Admin" asp-controller="SinhVien" asp-action="Index">
+        <i class="bi bi-person-vcard me-2"></i>Sinh viên
+    </a>
+    <a class="nav-link text-white @Active("GiaoVien")" asp-area="Admin" asp-controller="GiaoVien" asp-action="Index">
+        <i class="bi bi-person-workspace me-2"></i>Giảng viên
+    </a>
+
+    @if (laQuanTri)
+    {
+        <small class="text-uppercase text-white-50 fw-bold px-2 mt-3 mb-1" style="font-size:11px">Hệ thống</small>
+        <a class="nav-link text-white @Active("User")" asp-area="Admin" asp-controller="User" asp-action="Index">
+            <i class="bi bi-shield-lock me-2"></i>Quản lý tài khoản
+        </a>
+    }
+
+    <small class="text-uppercase text-white-50 fw-bold px-2 mt-3 mb-1" style="font-size:11px">Ngân hàng câu hỏi</small>
+    <a class="nav-link text-white @Active("DanhMucCauHoi")" asp-area="Admin" asp-controller="DanhMucCauHoi" asp-action="Index">
+        <i class="bi bi-folder2-open me-2"></i>Danh mục câu hỏi
+    </a>
+    <a class="nav-link text-white @Active("CauHoi")" asp-area="Admin" asp-controller="CauHoi" asp-action="Index">
+        <i class="bi bi-question-circle me-2"></i>Câu hỏi
+    </a>
+    <a class="nav-link text-white @Active("DapAn")" asp-area="Admin" asp-controller="DapAn" asp-action="Index">
+        <i class="bi bi-check2-square me-2"></i>Đáp án
+    </a>
+
+    <small class="text-uppercase text-white-50 fw-bold px-2 mt-3 mb-1" style="font-size:11px">Thi</small>
+    <a class="nav-link text-white @Active("DeThi")" asp-area="Admin" asp-controller="DeThi" asp-action="Index">
+        <i class="bi bi-file-earmark-text me-2"></i>Đề thi
+    </a>
+    <a class="nav-link text-white @Active("CauHoiDeThi")" asp-area="Admin" asp-controller="CauHoiDeThi" asp-action="Index">
+        <i class="bi bi-list-ol me-2"></i>Câu hỏi đề thi
+    </a>
+    <a class="nav-link text-white @Active("LichThi")" asp-area="Admin" asp-controller="LichThi" asp-action="Index">
+        <i class="bi bi-calendar-event me-2"></i>Lịch thi
+    </a>
+
+    <small class="text-uppercase text-white-50 fw-bold px-2 mt-3 mb-1" style="font-size:11px">Quản lý kết quả</small>
+    <a class="nav-link text-white @Active("KetQuaThi")" asp-area="Admin" asp-controller="KetQuaThi" asp-action="Index">
+        <i class="bi bi-clipboard-data me-2"></i>Theo dõi kết quả thi
+    </a>
+
+    <small class="text-uppercase text-white-50 fw-bold px-2 mt-3 mb-1" style="font-size:11px">Thống kê</small>
+    <a class="nav-link text-white @ActiveHanhDong("ThongKe", "Index")"
+       asp-area="Admin" asp-controller="ThongKe" asp-action="Index">
+        <i class="bi bi-speedometer2 me-2"></i>Dashboard
+    </a>
+    <a class="nav-link text-white @ActiveHanhDong("ThongKe", "GiaoVien", "GiaoVienChiTiet")"
+       asp-area="Admin" asp-controller="ThongKe" asp-action="GiaoVien">
+        <i class="bi bi-graph-up-arrow me-2"></i>Thống kê giảng viên
+    </a>
+    <a class="nav-link text-white @ActiveHanhDong("ThongKe", "SinhVien", "SinhVienChiTiet")"
+       asp-area="Admin" asp-controller="ThongKe" asp-action="SinhVien">
+        <i class="bi bi-mortarboard me-2"></i>Thống kê sinh viên
+    </a>
+    <a class="nav-link text-white @ActiveHanhDong("ThongKe", "Khoa", "KhoaChiTiet")"
+       asp-area="Admin" asp-controller="ThongKe" asp-action="Khoa">
+        <i class="bi bi-building me-2"></i>Thống kê khoa
+    </a>
+    <a class="nav-link text-white @ActiveHanhDong("ThongKe", "BoMon", "BoMonChiTiet")"
+       asp-area="Admin" asp-controller="ThongKe" asp-action="BoMon">
+        <i class="bi bi-diagram-3 me-2"></i>Thống kê bộ môn
+    </a>
+</nav>

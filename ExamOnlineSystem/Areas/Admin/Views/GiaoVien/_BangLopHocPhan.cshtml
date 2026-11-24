@@ -1,0 +1,38 @@
+@using ExamOnlineSystem.Utility
+@model List<ExamOnlineSystem.Models.ViewModels.GiaoVienLopHocPhanItem>
+@* Bảng lớp học phần của giảng viên (dùng cho năm học hiện tại và các năm học trước) *@
+<div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle mb-0">
+        <thead>
+            <tr>
+                <th class="bg-primary text-white-50">Mã lớp HP</th>
+                <th class="bg-primary text-white-50">Tên lớp học phần</th>
+                <th class="bg-primary text-white-50">Học phần</th>
+                <th class="bg-primary text-white-50">Năm học / Học kỳ</th>
+                <th class="bg-primary text-white-50 text-center">Vai trò</th>
+                <th class="bg-primary text-white-50 text-center">Sĩ số</th>
+                <th class="bg-primary text-white-50"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var l in Model)
+            {
+                <tr>
+                    <td class="fw-semibold">@l.MaLopHocPhan</td>
+                    <td>@l.TenLopHocPhan</td>
+                    <td>@l.MaHocPhan – @l.TenHocPhan <span class="text-muted small">(@l.SoTinChi TC)</span></td>
+                    <td class="text-nowrap">@l.TenNamHoc · @LopHocPhanLabel.TenHocKy(l.HocKy)</td>
+                    <td class="text-center">
+                        <span class="badge @(l.VaiTro == LopHocPhanVaiTro.PhuTrach ? "text-bg-primary" : "text-bg-secondary")">@LopHocPhanLabel.TenVaiTro(l.VaiTro)</span>
+                    </td>
+                    <td class="text-center text-nowrap">@l.SoSinhVien / @l.SiSoToiDa</td>
+                    <td class="text-center">
+                        <a asp-controller="LopHocPhan" asp-action="Details" asp-route-id="@l.Id" class="btn btn-sm btn-outline-info">
+                            <i class="bi bi-eye"></i> Xem
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

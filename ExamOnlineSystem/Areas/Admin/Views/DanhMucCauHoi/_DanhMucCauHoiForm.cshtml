@@ -1,0 +1,43 @@
+@model DanhMucCauHoi
+@* Các trường nhập liệu dùng chung cho Thêm / Sửa danh mục câu hỏi *@
+@{
+    var danhMucs = ViewData["DanhMucList"] as List<ExamOnlineSystem.Models.ViewModels.DanhMucCauHoiNode> ?? new();
+}
+<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+<div class="mb-3">
+    <label asp-for="MonHocId" class="form-label"></label>
+    <select asp-for="MonHocId" asp-items='ViewData["MonHocList"] as SelectList' class="form-select">
+        <option value="">-- Chọn môn học --</option>
+    </select>
+    <span asp-validation-for="MonHocId" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="DanhMucChaId" class="form-label"></label>
+    @* Danh mục cha phải cùng môn học: các option được lọc theo môn học đang chọn (danhmuccauhoi.js).
+       Có thể chọn danh mục ở bất kỳ cấp nào làm cha => tạo được danh mục nhiều cấp.
+       Option thụt lề theo cấp (dùng khoảng trắng không ngắt vì trình duyệt bỏ khoảng trắng thường). *@
+    <select asp-for="DanhMucChaId" class="form-select">
+        <option value="">-- Không có (danh mục gốc) --</option>
+        @foreach (var n in danhMucs)
+        {
+            var thutLe = n.Cap > 1 ? new string(' ', (n.Cap - 1) * 4) + "└ " : "";
+            <option value="@n.DanhMuc.Id" data-mon-hoc-id="@n.DanhMuc.MonHocId">@(thutLe + n.DanhMuc.TenDanhMuc)</option>
+        }
+    </select>
+    <div class="form-text">Chọn một danh mục ở bất kỳ cấp nào để tạo danh mục con của nó.</div>
+    <span asp-validation-for="DanhMucChaId" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="TenDanhMuc" class="form-label"></label>
+    <input asp-for="TenDanhMuc" class="form-control" placeholder="Nhập tên danh mục" />
+    <span asp-validation-for="TenDanhMuc" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="MoTa" class="form-label"></label>
+    <textarea asp-for="MoTa" class="form-control" rows="3" placeholder="Nhập mô tả (không bắt buộc)"></textarea>
+    <span asp-validation-for="MoTa" class="text-danger"></span>
+</div>

@@ -1,0 +1,75 @@
+@using ExamOnlineSystem.Models.ViewModels
+@model LoginVM
+@{
+    ViewData["Title"] = "Đăng nhập";
+}
+<div class="row justify-content-center align-items-center login-wrapper">
+    <div class="col-sm-10 col-md-7 col-lg-5 col-xl-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4 p-md-5">
+                <div class="text-center mb-4">
+                    <div class="login-icon mx-auto mb-3">
+                        <i class="bi bi-person-lock"></i>
+                    </div>
+                    <h3 class="mb-1">Đăng nhập</h3>
+                    <p class="text-muted mb-0">Hệ thống quản lý thi trực tuyến</p>
+                </div>
+
+                <form asp-action="Login" asp-route-returnUrl='@ViewData["ReturnUrl"]' method="post" novalidate>
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2" role="alert"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label"></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                            <input asp-for="Email" class="form-control" placeholder="nhap@email.com"
+                                   autocomplete="username" autofocus />
+                        </div>
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Password" class="form-label"></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-key"></i></span>
+                            <input asp-for="Password" class="form-control" placeholder="Nhập mật khẩu"
+                                   autocomplete="current-password" />
+                            <button type="button" class="btn btn-outline-secondary" id="btnTogglePassword"
+                                    title="Hiện/ẩn mật khẩu" aria-label="Hiện/ẩn mật khẩu">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        <span asp-validation-for="Password" class="text-danger small"></span>
+                    </div>
+
+                    <div class="form-check mb-4">
+                        <input asp-for="RememberMe" class="form-check-input" />
+                        <label asp-for="RememberMe" class="form-check-label"></label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2">
+                        <i class="bi bi-box-arrow-in-right"></i> Đăng nhập
+                    </button>
+                </form>
+
+                <p class="text-center text-muted mt-4 mb-0">
+                    Chưa có tài khoản?
+                    <a asp-action="Register" asp-route-returnUrl='@ViewData["ReturnUrl"]'>Đăng ký</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Hiện/ẩn mật khẩu
+        $("#btnTogglePassword").on("click", function () {
+            var $pwd = $("#Password");
+            var hien = $pwd.attr("type") === "password";
+            $pwd.attr("type", hien ? "text" : "password");
+            $(this).find("i").toggleClass("bi-eye", !hien).toggleClass("bi-eye-slash", hien);
+        });
+    </script>
+}

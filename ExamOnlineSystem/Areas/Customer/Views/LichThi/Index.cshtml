@@ -1,0 +1,130 @@
+@using System.Globalization
+@using ExamOnlineSystem.Models.ViewModels
+@model SinhVienDetailVM
+@{
+    ViewData["Title"] = "Lịch thi của tôi";
+    var xemDaQua = ViewData["XemDaQua"] as bool? == true;
+    var now = DateTime.UtcNow;
+    var vi = new CultureInfo("vi-VN");
+
+    // Sắp diễn ra = chưa hết giờ (gồm cả kỳ thi đang diễn ra); Đã qua = đã hết giờ
+    var sapDienRa = Model.LichThis.Where(l => l.ThoiGianKetThuc > now).OrderBy(l => l.ThoiGianBatDau).ToList();
+    var daQua = Model.LichThis.Where(l => l.ThoiGianKetThuc <= now).OrderByDescending(l => l.ThoiGianBatDau).ToList();
+    var dangXem = xemDaQua ? daQua : sapDienRa;
+
+    string ConLai(DateTime moc)
+    {
+        var tg = moc - now;
+        if (tg.TotalDays >= 1) return $"còn {(int)tg.TotalDays} ngày {tg.Hours} giờ";
+        if (tg.TotalHours >= 1) return $"còn {(int)tg.TotalHours} giờ {tg.Minutes} phút";
+        return $"còn {Math.Max(1, (int)Math.Ceiling(tg.TotalMinutes))} phút";
+    }
+
+    string TenNgay(DateTime ngay)
+    {
+        var homNay = DateTime.Now.Date;
+        if (ngay == homNay) return "Hôm nay";
+        if (ngay == homNay.AddDays(1)) return "Ngày mai";
+        if (ngay == homNay.AddDays(-1)) return "Hôm qua";
+        var s = ngay.ToString("dddd", vi);
+        return char.ToUpper(s[0]) + s[1..];
+    }
+}
+
+@* Layout công khai không bọc nội dung trong container -> tự bọc để có lề, không tràn ngang *@
+<div class="container-xl py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+        <div>
+            <h3 class="text-black-50 mb-1"><i class="bi bi-calendar-event"></i> Lịch thi của tôi</h3>
+            <div class="small text-muted">
+                @if (sapDienRa.Count > 0)
+                {
+                    <span>@sapDienRa.Count kỳ thi đang và sắp diễn ra · gần nhất @sapDienRa[0].ThoiGianBatDau.ToLocalTime().ToString("HH:mm dd/MM/yyyy")</span>
+                }
+                else
+                {
+                    <span>Không có kỳ thi nào sắp diễn ra</span>
+                }
+            </div>
+        </div>
+        <ul class="nav nav-pills">
+            <li class="nav-item">
+                <a class="nav-link @(xemDaQua ? "" : "active")" asp-action="Index">Sắp diễn ra <span class="badge @(xemDaQua ? "text-bg-secondary" : "text-bg-light")">@sapDienRa.Count</span></a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @(xemDaQua ? "active" : "")" asp-action="Index" asp-route-xem="da-qua">Đã qua <span class="badge @(xemDaQua ? "text-bg-light" : "text-bg-secondary")">@daQua.Count</span></a>
+            </li>
+        </ul>
+    </div>
+
+    @if (dangXem.Count == 0)
+    {
+        <div class="card shadow-sm">
+            <div class="card-body text-muted">
+                <i class="bi bi-info-circle"></i>
+                @(xemDaQua ? "Bạn chưa có kỳ thi nào đã diễn ra." : "Hiện chưa có kỳ thi nào sắp diễn ra. Lịch thi mới sẽ xuất hiện tại đây khi được xếp.")
+            </div>
+        </div>
+    }
+
+    @foreach (var nhom in dangXem.GroupBy(l => l.ThoiGianBatDau.ToLocalTime().Date))
+    {
+        <h6 class="text-uppercase text-muted small fw-bold mt-4 mb-2">
+            @TenNgay(nhom.Key) · @nhom.Key.ToString("dd/MM/yyyy")
+        </h6>
+        <div class="card shadow-sm">
+            <div class="list-group list-group-flush">
+                @foreach (var lt in nhom)
+                {
+                    var bd = lt.ThoiGianBatDau.ToLocalTime();
+                    var kt = lt.ThoiGianKetThuc.ToLocalTime();
+                    var dangDienRa = lt.ThoiGianBatDau <= now && now < lt.ThoiGianKetThuc;
+                    @* Kỳ thi đang diễn ra: vạch vàng bên trái *@
+                    <div class="list-group-item py-3" style="@(dangDienRa ? "border-left: 4px solid var(--bs-warning)" : "")">
+                        <div class="d-flex gap-3 align-items-start">
+                            <div class="text-center border rounded px-2 py-1 flex-shrink-0" style="min-width:76px">
+                                <div class="fs-5 fw-bold lh-1">@bd.ToString("HH:mm")</div>
+                                <div class="small text-muted">đến @kt.ToString("HH:mm")</div>
+                            </div>
+                            @* Màn hình nhỏ: trạng thái xuống dưới nội dung; từ md trở lên: nằm bên phải *@
+                            <div class="flex-grow-1 d-flex flex-column flex-md-row gap-2" style="min-width:0">
+                            <div>
+                                <a asp-action="ChiTiet" asp-route-id="@lt.LichThiId" class="fw-semibold text-decoration-none">@lt.TenLichThi</a>
+                                <div class="small text-muted">
+                                    <i class="bi bi-book"></i> @lt.TenMonHoc · <i class="bi bi-hourglass-split"></i> làm bài @lt.ThoiLuong phút
+                                </div>
+                                <div class="small text-muted"><i class="bi bi-file-earmark-text"></i> @lt.TenDeThi</div>
+                                @if (!string.IsNullOrWhiteSpace(lt.GhiChu))
+                                {
+                                    <div class="small mt-1"><i class="bi bi-sticky"></i> @lt.GhiChu</div>
+                                }
+                            </div>
+                            <div class="text-md-end ms-md-auto flex-shrink-0">
+                                @if (dangDienRa)
+                                {
+                                    <span class="badge text-bg-warning"><i class="bi bi-alarm"></i> Đang diễn ra</span>
+                                    <div class="small text-muted mt-1">kết thúc @kt.ToString("HH:mm") (@ConLai(lt.ThoiGianKetThuc))</div>
+                                    <div class="small mt-1"><span class="badge text-bg-@KetQuaLabel.MauTrangThai(lt.TrangThai)">@KetQuaLabel.TenTrangThai(lt.TrangThai)</span></div>
+                                }
+                                else if (lt.ThoiGianBatDau > now)
+                                {
+                                    <span class="badge text-bg-light border">@ConLai(lt.ThoiGianBatDau)</span>
+                                }
+                                else if (lt.Diem.HasValue)
+                                {
+                                    <span class="fw-semibold">@lt.DiemHe10!.Value.ToString("0.00")</span><span class="text-muted">/10</span>
+                                    <div class="small"><span class="badge text-bg-@KetQuaLabel.MauXepLoai(KetQuaLabel.XepLoai(lt.DiemHe10))">@KetQuaLabel.XepLoai(lt.DiemHe10)</span></div>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-@KetQuaLabel.MauTrangThai(lt.TrangThai)">@(lt.TrangThai == 0 ? "Không dự thi" : KetQuaLabel.TenTrangThai(lt.TrangThai))</span>
+                                }
+                            </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>

@@ -1,0 +1,51 @@
+@model LopHocPhan
+@* Các trường nhập liệu dùng chung cho Thêm / Sửa lớp học phần *@
+<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+<div class="mb-3">
+    <label asp-for="HocPhanId" class="form-label"></label>
+    <select asp-for="HocPhanId" asp-items='ViewData["HocPhanList"] as SelectList' class="form-select">
+        <option value="">-- Chọn học phần --</option>
+    </select>
+    <span asp-validation-for="HocPhanId" class="text-danger"></span>
+</div>
+
+<div class="row">
+    <div class="col-md-7 mb-3">
+        <label asp-for="NamHocId" class="form-label"></label>
+        <select asp-for="NamHocId" asp-items='ViewData["NamHocList"] as SelectList' class="form-select">
+            <option value="">-- Chọn năm học --</option>
+        </select>
+        <span asp-validation-for="NamHocId" class="text-danger"></span>
+    </div>
+    <div class="col-md-5 mb-3">
+        <label asp-for="HocKy" class="form-label"></label>
+        <select asp-for="HocKy" asp-items='ViewData["HocKyList"] as SelectList' class="form-select"></select>
+        <span asp-validation-for="HocKy" class="text-danger"></span>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <label asp-for="MaLopHocPhan" class="form-label"></label>
+        <input asp-for="MaLopHocPhan" class="form-control" placeholder="Ví dụ: INT1234.01" />
+        <span asp-validation-for="MaLopHocPhan" class="text-danger"></span>
+    </div>
+    <div class="col-md-6 mb-3">
+        <label asp-for="SiSoToiDa" class="form-label"></label>
+        <input asp-for="SiSoToiDa" type="number" min="1" max="500" class="form-control" />
+        <span asp-validation-for="SiSoToiDa" class="text-danger"></span>
+    </div>
+</div>
+
+<div class="mb-3">
+    <label asp-for="TenLopHocPhan" class="form-label"></label>
+    <input asp-for="TenLopHocPhan" class="form-control" placeholder="Ví dụ: Lập trình Web - Nhóm 1" />
+    <span asp-validation-for="TenLopHocPhan" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="GhiChu" class="form-label"></label>
+    <textarea asp-for="GhiChu" class="form-control" rows="2" placeholder="Ghi chú (không bắt buộc)"></textarea>
+    <span asp-validation-for="GhiChu" class="text-danger"></span>
+</div>

@@ -1,0 +1,278 @@
+@using ExamOnlineSystem.Models.ViewModels
+@using ExamOnlineSystem.Utility
+@model DeThiChiTietVM
+@{
+    var de = Model.DeThi;
+    ViewData["Title"] = "Đề thi " + de.MaDeThi;
+    var khopDiem = Math.Abs(Model.TongDiemCau - de.TongDiem) < 0.001;
+    var coTracNghiem = Model.CauHois.Any(c => c.LoaiCauHoi == 1 && c.DapAns.Count >= 2);
+    var mauMucDo = new Dictionary<int, string> { [1] = "success", [2] = "info", [3] = "warning", [4] = "danger" };
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h3 class="text-black-50 mb-0">Chi tiết đề thi</h3>
+    <div class="d-flex flex-wrap gap-2">
+        @if (Model.CoQuyenSua && de.DaPhatHanh)
+        {
+            <a asp-controller="LichThi" asp-action="Create" asp-route-deThiId="@de.Id" class="btn btn-primary">
+                <i class="bi bi-calendar-plus"></i> Tạo lịch thi
+            </a>
+            <form asp-action="HuyPhatHanh" asp-route-id="@de.Id" method="post" id="frmHuyPhatHanh" class="d-inline">
+                <button type="submit" class="btn btn-outline-warning"><i class="bi bi-unlock"></i> Hủy phát hành</button>
+            </form>
+            <a asp-action="TronDe" asp-route-id="@de.Id" class="btn btn-outline-secondary"><i class="bi bi-shuffle"></i> Trộn đề</a>
+        }
+        else if (Model.CoQuyenSua)
+        {
+            <form asp-action="PhatHanh" asp-route-id="@de.Id" method="post" id="frmPhatHanh" class="d-inline">
+                <button type="submit" class="btn btn-success" @(Model.VanDePhatHanh.Count > 0 ? "disabled" : "")
+                        title="@(Model.VanDePhatHanh.Count > 0 ? "Đề chưa đủ điều kiện phát hành" : "Cho phép dùng đề để tổ chức thi")">
+                    <i class="bi bi-send-check"></i> Phát hành
+                </button>
+            </form>
+            <a asp-action="Edit" asp-route-id="@de.Id" class="btn btn-primary"><i class="bi bi-pencil-square"></i> Sửa</a>
+            <a asp-action="TronDe" asp-route-id="@de.Id" class="btn btn-outline-secondary"><i class="bi bi-shuffle"></i> Trộn đề</a>
+            @if (coTracNghiem)
+            {
+                <form asp-action="TronDapAn" asp-route-id="@de.Id" method="post" id="frmTronDapAn" class="d-inline">
+                    <button type="submit" class="btn btn-outline-secondary"><i class="bi bi-arrow-repeat"></i> Trộn đáp án</button>
+                </form>
+            }
+        }
+        <a asp-action="XemTruoc" asp-route-id="@de.Id" class="btn btn-outline-info"><i class="bi bi-eye"></i> Xem trước</a>
+        <a asp-action="Index" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Quay lại danh sách</a>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0 d-flex flex-wrap align-items-center gap-2">
+            <span><i class="bi bi-file-earmark-text"></i> @de.MaDeThi – @de.TenDeThi</span>
+            @if (de.DaPhatHanh)
+            {
+                <span class="badge text-bg-success"><i class="bi bi-check2-circle"></i> Đã phát hành</span>
+            }
+            else
+            {
+                <span class="badge text-bg-light text-secondary">Nháp</span>
+            }
+        </h5>
+    </div>
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-3">Môn học</dt>
+            <dd class="col-sm-9">@Model.TenMonHoc</dd>
+            <dt class="col-sm-3">Loại đề</dt>
+            <dd class="col-sm-9">@DeThiLabel.TenLoaiDeThi(de.LoaiDeThi)</dd>
+            <dt class="col-sm-3">Thời lượng</dt>
+            <dd class="col-sm-9">@de.ThoiLuong phút</dd>
+            <dt class="col-sm-3">Số câu / Điểm</dt>
+            <dd class="col-sm-9">
+                @Model.CauHois.Count câu ·
+                <span class="@(khopDiem ? "text-success" : "text-warning fw-semibold")">@Model.TongDiemCau / @de.TongDiem điểm</span>
+                @if (!khopDiem)
+                {
+                    <small class="text-muted">(tổng điểm các câu chưa khớp tổng điểm đề)</small>
+                }
+            </dd>
+            <dt class="col-sm-3">Giảng viên</dt>
+            <dd class="col-sm-9">@Model.TenGiaoVien</dd>
+            <dt class="col-sm-3">Trạng thái</dt>
+            <dd class="col-sm-9 mb-0">
+                @if (de.DaPhatHanh)
+                {
+                    <span class="text-success fw-semibold">Đã phát hành</span>
+                    <span class="text-muted">lúc @de.NgayPhatHanh?.ToLocalTime().ToString("HH:mm dd/MM/yyyy")</span>
+                    <div class="small text-muted">Đề được dùng để tổ chức thi. Đề và các câu hỏi trong đề bị khóa chỉnh sửa cho tới khi hủy phát hành.</div>
+                }
+                else
+                {
+                    <span class="text-secondary">Nháp</span>
+                    <span class="small text-muted">— chưa dùng được để tổ chức thi</span>
+                }
+            </dd>
+        </dl>
+    </div>
+</div>
+
+@if (!de.DaPhatHanh)
+{
+    <div class="alert @(Model.VanDePhatHanh.Count == 0 ? "alert-success" : "alert-warning") mb-4">
+        @if (Model.VanDePhatHanh.Count == 0)
+        {
+            <i class="bi bi-check-circle-fill"></i> <strong>Đề đủ điều kiện phát hành.</strong>
+            @if (Model.CoQuyenSua)
+            {
+                <span>Nên <a asp-action="XemTruoc" asp-route-id="@de.Id" class="alert-link">xem trước đề</a> rồi bấm <strong>Phát hành</strong> để cho phép dùng đề tổ chức thi.</span>
+            }
+        }
+        else
+        {
+            <strong><i class="bi bi-exclamation-triangle"></i> Đề chưa đủ điều kiện phát hành (@Model.VanDePhatHanh.Count vấn đề):</strong>
+            <ul class="mb-0 mt-1">
+                @foreach (var v in Model.VanDePhatHanh)
+                {
+                    <li>
+                        @v
+                        @if (v.StartsWith("Tổng điểm") && Model.CoQuyenSua && Model.CauHois.Count > 0)
+                        {
+                            <a asp-controller="CauHoiDeThi" asp-action="PhanBoDiem" asp-route-deThiId="@de.Id" class="ms-1">→ Phân bổ điểm</a>
+                        }
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+}
+
+@if (Model.CauHois.Count > 0)
+{
+    @* Bảng đáp án theo thứ tự câu và đáp án của đề *@
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white"><h5 class="mb-0"><i class="bi bi-key"></i> Bảng đáp án</h5></div>
+        <div class="card-body">
+            <div class="row row-cols-3 row-cols-sm-4 row-cols-md-6 row-cols-lg-8 g-2" id="bangDapAn">
+                @foreach (var c in Model.CauHois)
+                {
+                    <div class="col">
+                        <div class="border rounded text-center py-1 small">
+                            <div class="text-muted">Câu @c.ThuTu</div>
+                            <div class="fw-bold @(c.LoaiCauHoi == 1 ? "text-success" : "text-secondary")">@c.DapAnDung</div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Nội dung đề</h5>
+        <div class="d-flex gap-2">
+            @if (Model.CoQuyenSua && !de.DaPhatHanh)
+            {
+                <a asp-controller="CauHoiDeThi" asp-action="Create" asp-route-deThiId="@de.Id" class="btn btn-sm btn-outline-success">
+                    <i class="bi bi-plus-lg"></i> Thêm câu hỏi
+                </a>
+                @if (Model.CauHois.Count >= 1)
+                {
+                    <a asp-controller="CauHoiDeThi" asp-action="PhanBoDiem" asp-route-deThiId="@de.Id" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-calculator"></i> Phân bổ điểm
+                    </a>
+                }
+                @if (Model.CauHois.Count >= 2)
+                {
+                    <a asp-controller="CauHoiDeThi" asp-action="SapXep" asp-route-deThiId="@de.Id" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-sort-numeric-down"></i> Sắp xếp câu hỏi
+                    </a>
+                }
+            }
+            <a asp-controller="CauHoiDeThi" asp-action="Index" asp-route-deThiId="@de.Id" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-list-ol"></i> Xem dạng bảng
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        @if (Model.CauHois.Count == 0)
+        {
+            <p class="text-muted mb-0"><i class="bi bi-info-circle"></i> Đề chưa có câu hỏi nào.</p>
+        }
+        @foreach (var c in Model.CauHois)
+        {
+            <div class="mb-4 cau-trong-de">
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                    <strong>Câu @c.ThuTu</strong>
+                    <span class="badge text-bg-light border">@c.Diem điểm</span>
+                    <span class="badge text-bg-light border">@CauHoiLabel.TenLoaiCauHoi(c.LoaiCauHoi)</span>
+                    <span class="badge text-bg-@(mauMucDo.GetValueOrDefault(c.MucDo, "secondary"))">@CauHoiLabel.TenMucDo(c.MucDo)</span>
+                    @if (c.DaTronDapAn)
+                    {
+                        <span class="badge text-bg-secondary" title="Thứ tự đáp án đã được trộn so với câu hỏi gốc"><i class="bi bi-shuffle"></i> Đã trộn đáp án</span>
+                    }
+                    <a asp-controller="CauHoi" asp-action="Details" asp-route-id="@c.CauHoiId" class="small text-muted ms-auto">Câu hỏi #@c.CauHoiId</a>
+                    @if (Model.CoQuyenSua && !de.DaPhatHanh)
+                    {
+                        <a asp-controller="CauHoiDeThi" asp-action="Edit" asp-route-id="@c.Id" class="btn btn-sm btn-link p-0"
+                           title="Sửa câu @c.ThuTu (đổi câu hỏi, điểm, vị trí)"><i class="bi bi-pencil-square"></i></a>
+                        <button type="button" class="btn btn-sm btn-link text-danger p-0 btn-bo-khoi-de"
+                                data-url="@Url.Action("DeleteCauHoiDeThi", "CauHoiDeThi", new { id = c.Id })"
+                                data-name="Câu @c.ThuTu (#@c.CauHoiId)" title="Bỏ câu @c.ThuTu khỏi đề">
+                            <i class="bi bi-x-circle"></i>
+                        </button>
+                    }
+                </div>
+                <div style="white-space: pre-line">@c.NoiDung</div>
+                @if (c.CoHinhAnh)
+                {
+                    <img src="@Url.Action("HinhAnh", "CauHoi", new { id = c.CauHoiId })" alt="Ảnh minh họa câu @c.ThuTu"
+                         class="img-thumbnail mt-2" style="max-height: 200px" />
+                }
+                @if (c.LoaiCauHoi == 1)
+                {
+                    <ul class="list-group list-group-flush mt-2 small">
+                        @for (var i = 0; i < c.DapAns.Count; i++)
+                        {
+                            var d = c.DapAns[i];
+                            var nhan = ThuTuDapAnHelper.Nhan(i);
+                            var nhanGoc = c.NhanGoc.GetValueOrDefault(d.Id, "?");
+                            <li class="list-group-item d-flex gap-2 @(d.DapAnDung ? "list-group-item-success" : "")">
+                                <span class="fw-semibold">@nhan.</span>
+                                <span class="me-auto">@d.NoiDung</span>
+                                @if (d.DapAnDung)
+                                {
+                                    <i class="bi bi-check-circle-fill text-success" title="Đáp án đúng"></i>
+                                }
+                                @if (c.DaTronDapAn)
+                                {
+                                    <small class="text-muted text-nowrap" title="Vị trí trong câu hỏi gốc">(gốc @nhanGoc)</small>
+                                }
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<form id="deleteForm" method="post">
+    @Html.AntiForgeryToken()
+</form>
+
+@section Scripts {
+    <script src="~/js/cauhoidethi-xoa.js" asp-append-version="true"></script>
+    <script>
+        function xacNhan(selector, title, text, nut) {
+            $(selector).on("submit", function (e) {
+                var form = this;
+                if (form.dataset.ok) return;
+                e.preventDefault();
+                Swal.fire({ title: title, text: text, icon: "question", showCancelButton: true,
+                            confirmButtonText: nut, cancelButtonText: "Hủy", reverseButtons: true })
+                    .then(function (r) { if (r.isConfirmed) { form.dataset.ok = "1"; form.submit(); } });
+            });
+        }
+        xacNhan("#frmPhatHanh", "Phát hành đề thi?",
+                "Đề sẽ được dùng để tổ chức thi. Sau khi phát hành, đề và các câu hỏi/đáp án trong đề bị khóa chỉnh sửa.", "Phát hành");
+        xacNhan("#frmHuyPhatHanh", "Hủy phát hành?",
+                "Đề sẽ trở về nháp, không dùng được để tổ chức thi cho tới khi phát hành lại.", "Hủy phát hành");
+        // Xác nhận trước khi trộn lại đáp án của đề
+        $("#frmTronDapAn").on("submit", function (e) {
+            var form = this;
+            if (form.dataset.ok) return;
+            e.preventDefault();
+            Swal.fire({
+                title: "Trộn lại đáp án?",
+                text: "Thứ tự đáp án (A/B/C/D) của các câu trắc nghiệm trong đề này sẽ được xáo ngẫu nhiên. Bảng đáp án của đề sẽ thay đổi.",
+                icon: "question",
+                showCancelButton: true,
+                confirmButtonText: "Trộn",
+                cancelButtonText: "Hủy",
+                reverseButtons: true
+            }).then(function (r) {
+                if (r.isConfirmed) { form.dataset.ok = "1"; form.submit(); }
+            });
+        });
+    </script>
+}

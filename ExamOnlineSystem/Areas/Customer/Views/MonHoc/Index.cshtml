@@ -1,0 +1,144 @@
+@using ExamOnlineSystem.Models.ViewModels
+@using ExamOnlineSystem.Utility
+@model MonHocSinhVienVM
+@{
+    ViewData["Title"] = "Môn học của tôi";
+    var tinChiDangHoc = Model.MonHocs.Where(m => m.DangHoc).Sum(m => m.SoTinChi);
+}
+
+@* Layout công khai không bọc nội dung trong container -> tự bọc để có lề, không tràn ngang *@
+<div class="container-xl py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+        <div>
+            <h3 class="text-black-50 mb-1"><i class="bi bi-book"></i> Môn học của tôi</h3>
+            <div class="small text-muted">
+                @Model.SoMonDangHoc môn đang học năm nay
+                @if (!Model.XemTatCa && tinChiDangHoc > 0)
+                {
+                    <span>· @tinChiDangHoc tín chỉ</span>
+                }
+                · @Model.TongSoMon môn tất cả
+            </div>
+        </div>
+        <ul class="nav nav-pills">
+            <li class="nav-item">
+                <a class="nav-link @(Model.XemTatCa ? "" : "active")" asp-action="Index">Đang học</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @(Model.XemTatCa ? "active" : "")" asp-action="Index" asp-route-xem="tat-ca">Tất cả</a>
+            </li>
+        </ul>
+    </div>
+
+    @if (Model.MonHocs.Count == 0)
+    {
+        <div class="card shadow-sm">
+            <div class="card-body text-muted">
+                <i class="bi bi-info-circle"></i>
+                @(Model.XemTatCa
+                    ? "Bạn chưa có môn học nào (chưa được xếp vào lớp học phần hoặc lịch thi)."
+                    : "Bạn chưa có môn học nào trong năm học hiện tại.")
+                @if (!Model.XemTatCa && Model.TongSoMon > 0)
+                {
+                    <a asp-action="Index" asp-route-xem="tat-ca">Xem tất cả môn học</a>
+                }
+            </div>
+        </div>
+    }
+
+    <div class="row g-3">
+        @foreach (var m in Model.MonHocs)
+        {
+            var diem = m.DiemCaoNhat;
+            var xepLoai = KetQuaLabel.XepLoai(diem);
+            <div class="col-lg-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white">
+                        <div class="d-flex justify-content-between align-items-start gap-2">
+                            <div>
+                                <h5 class="mb-0">@m.TenMonHoc</h5>
+                                <div class="small text-muted">
+                                    @m.MaMonHoc
+                                    @if (!string.IsNullOrEmpty(m.TenBoMon))
+                                    {
+                                        <span>· @m.TenBoMon</span>
+                                    }
+                                </div>
+                            </div>
+                            @if (m.DangHoc)
+                            {
+                                <span class="badge text-bg-primary text-nowrap">Đang học</span>
+                            }
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex flex-wrap gap-3 small mb-3">
+                            <span><i class="bi bi-ui-checks"></i> @m.HinhThucThi</span>
+                            <span><i class="bi bi-hourglass-split"></i> @m.ThoiGianThi phút</span>
+                            @if (m.SoTinChi > 0)
+                            {
+                                <span><i class="bi bi-mortarboard"></i> @m.SoTinChi tín chỉ</span>
+                            }
+                        </div>
+
+                        <h6 class="text-uppercase text-muted small fw-bold mb-2">Lớp học phần</h6>
+                        @if (m.LopHocPhans.Count == 0)
+                        {
+                            <p class="small text-muted">Chưa được xếp vào lớp học phần của môn này.</p>
+                        }
+                        else
+                        {
+                            <ul class="list-unstyled small mb-3">
+                                @foreach (var l in m.LopHocPhans)
+                                {
+                                    <li class="mb-1">
+                                        <span class="fw-semibold">@l.MaLopHocPhan</span> – @l.TenHocPhan
+                                        <span class="text-muted">· @l.TenNamHoc · @LopHocPhanLabel.TenHocKy(l.HocKy)</span>
+                                        <div class="text-muted"><i class="bi bi-person-badge"></i> @(l.GiaoVienPhuTrach ?? "Chưa phân công giảng viên")</div>
+                                    </li>
+                                }
+                            </ul>
+                        }
+
+                        <h6 class="text-uppercase text-muted small fw-bold mb-2">Thi &amp; kết quả</h6>
+                        @if (m.LichThis.Count == 0)
+                        {
+                            <p class="small text-muted mb-0">Chưa có lịch thi của môn này.</p>
+                        }
+                        else
+                        {
+                            <ul class="list-unstyled small mb-0">
+                                @foreach (var lt in m.LichThis)
+                                {
+                                    <li class="d-flex justify-content-between gap-2 mb-1">
+                                        <span>
+                                            @lt.TenLichThi
+                                            <span class="text-muted">· @lt.ThoiGianBatDau.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+                                        </span>
+                                        <span class="text-nowrap">
+                                            @if (lt.Diem.HasValue)
+                                            {
+                                                <strong>@lt.DiemHe10!.Value.ToString("0.00")</strong><span class="text-muted">/10</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge text-bg-@KetQuaLabel.MauTrangThai(lt.TrangThai)">@KetQuaLabel.TenTrangThai(lt.TrangThai)</span>
+                                            }
+                                        </span>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                    </div>
+                    @if (diem.HasValue)
+                    {
+                        <div class="card-footer bg-white small d-flex justify-content-between">
+                            <span class="text-muted">Điểm cao nhất (thang 10)</span>
+                            <span><strong>@diem.Value.ToString("0.00")</strong> <span class="badge text-bg-@KetQuaLabel.MauXepLoai(xepLoai)">@xepLoai</span></span>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>

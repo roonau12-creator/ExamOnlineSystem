@@ -1,0 +1,23 @@
+@using ExamOnlineSystem.Models.ViewModels
+@model DeThiFormVM
+@{
+    ViewData["Title"] = "Sửa đề thi " + Model.MaDeThi;
+}
+
+<form asp-action="Edit" method="post" id="frmDeThi">
+    <input type="hidden" asp-for="Id" />
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <h3 class="text-black-50 mb-0"><i class="bi bi-pencil-square"></i> Sửa đề thi</h3>
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle"></i> Lưu thay đổi</button>
+            <a asp-action="Index" class="btn btn-secondary"><i class="bi bi-x-circle"></i> Hủy</a>
+        </div>
+    </div>
+
+    <partial name="_DeThiForm" model="Model" />
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/dethi-form.js" asp-append-version="true"></script>
+}

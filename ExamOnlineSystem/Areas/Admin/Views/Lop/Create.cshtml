@@ -1,0 +1,51 @@
+@model Lop
+@{
+    ViewData["Title"] = "Thêm lớp";
+}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="bi bi-plus-circle"></i> Thêm lớp</h4>
+            </div>
+            <div class="card-body">
+                <form asp-action="Create" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="KhoaId" class="form-label"></label>
+                        <select asp-for="KhoaId" asp-items='ViewData["KhoaList"] as SelectList' class="form-select">
+                            <option value="0">-- Chọn khoa --</option>
+                        </select>
+                        <span asp-validation-for="KhoaId" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="MaLop" class="form-label"></label>
+                        <input asp-for="MaLop" class="form-control" placeholder="Ví dụ: 64XD1" />
+                        <span asp-validation-for="MaLop" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="TenLop" class="form-label"></label>
+                        <input asp-for="TenLop" class="form-control" placeholder="Ví dụ: Kỹ thuật xây dựng 1 - K64" />
+                        <span asp-validation-for="TenLop" class="text-danger"></span>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Thêm
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Hủy
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

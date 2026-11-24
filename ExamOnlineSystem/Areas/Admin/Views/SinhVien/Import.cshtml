@@ -1,0 +1,85 @@
+@{
+    ViewData["Title"] = "Nhập sinh viên từ Excel";
+    var errors = ViewBag.Errors as List<string>;
+}
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-xl-7">
+        <div class="card shadow-sm">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0"><i class="bi bi-file-earmark-excel"></i> Nhập sinh viên từ Excel</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info small">
+                    File <strong>.xlsx</strong>, dòng 1 là tiêu đề, dữ liệu từ dòng 2, gồm các cột:
+                    <ol class="mb-2 mt-1">
+                        <li><strong>Mã sinh viên</strong></li>
+                        <li><strong>Họ tên</strong></li>
+                        <li><strong>Ngày sinh</strong> – dạng dd/MM/yyyy</li>
+                        <li><strong>Giới tính</strong> – Nam hoặc Nữ</li>
+                        <li><strong>Mã lớp</strong> – phải có sẵn trong hệ thống; khoa lấy theo lớp</li>
+                        <li><strong>Email</strong> – dùng làm tên đăng nhập</li>
+                        <li><strong>Số điện thoại</strong> – 10 chữ số</li>
+                        <li><strong>Mật khẩu</strong> – không bắt buộc, để trống thì dùng mật khẩu mặc định bên dưới</li>
+                    </ol>
+                    Mỗi sinh viên mới được tạo kèm một tài khoản đăng nhập (vai trò Sinh viên).
+                    Sinh viên có <strong>mã đã tồn tại sẽ được bỏ qua</strong>.
+                    File có bất kỳ dòng lỗi nào thì <strong>không nhập dòng nào</strong>.
+                    <div class="mt-2">
+                        <a asp-action="DownloadTemplate" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-download"></i> Tải file mẫu (kèm danh sách mã lớp)
+                        </a>
+                    </div>
+                </div>
+
+                @if (errors != null && errors.Count > 0)
+                {
+                    <div class="alert alert-danger">
+                        <strong>File có @errors.Count lỗi, chưa nhập dữ liệu nào:</strong>
+                        <ul class="mb-0">
+                            @foreach (var e in errors)
+                            {
+                                <li>@e</li>
+                            }
+                        </ul>
+                    </div>
+                }
+
+                <form asp-action="Import" method="post" enctype="multipart/form-data">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                    <div class="mb-3">
+                        <label for="file" class="form-label">Chọn file Excel</label>
+                        <input type="file" id="file" name="file" class="form-control" accept=".xlsx" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="matKhauMacDinh" class="form-label">Mật khẩu mặc định</label>
+                        <input type="text" id="matKhauMacDinh" name="matKhauMacDinh" class="form-control" autocomplete="off"
+                               placeholder="Dùng cho các dòng để trống cột Mật khẩu" />
+                        <div class="form-text">Ít nhất 6 ký tự, có chữ số. Nên yêu cầu sinh viên đổi mật khẩu sau khi đăng nhập.</div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="submit" class="btn btn-success" id="btnImport">
+                            <i class="bi bi-upload"></i> Nhập
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Hủy
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Nhập nhiều sinh viên mất vài giây (mỗi tài khoản phải mã hóa mật khẩu) – khóa nút để tránh bấm 2 lần
+        document.querySelector("form[enctype]").addEventListener("submit", function () {
+            var btn = document.getElementById("btnImport");
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang nhập...';
+        });
+    </script>
+}

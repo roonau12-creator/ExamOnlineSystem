@@ -1,0 +1,12 @@
+﻿@using ExamOnlineSystem.Utility
+@{
+    @if (User.IsInRole(SD.Role_Admin) || User.IsInRole(SD.Role_Teacher))
+    {
+        Layout = "_AdminLayout";
+    }
+    else
+    {
+        Layout = "_Layout";
+    }
+
+}

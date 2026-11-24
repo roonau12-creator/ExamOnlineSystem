@@ -1,0 +1,90 @@
+@using ExamOnlineSystem.Models.ViewModels
+@model DapAnFormVM
+@{
+    ViewData["Title"] = "Thêm đáp án";
+    var cauHois = ViewData["CauHoiList"] as List<CauHoiLuaChonVM> ?? new();
+}
+<div class="row justify-content-center">
+    <div class="col-lg-9 col-xl-7">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="bi bi-plus-circle"></i> Thêm đáp án</h4>
+            </div>
+            <div class="card-body">
+                @if (cauHois.Count == 0)
+                {
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        Không có câu hỏi trắc nghiệm nào bạn được phép thêm đáp án.
+                        <a asp-controller="CauHoi" asp-action="Create">Thêm câu hỏi mới</a>
+                    </div>
+                }
+
+                <form asp-action="Create" method="post" id="frmDapAn">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-5">
+                            <label asp-for="MonHocId" class="form-label"></label>
+                            <select asp-for="MonHocId" asp-items='ViewData["MonHocList"] as SelectList' class="form-select">
+                                <option value="">-- Tất cả môn học --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-7">
+                            <label asp-for="CauHoiId" class="form-label"></label>
+                            @* Chỉ liệt kê câu trắc nghiệm; lọc theo môn học (dapan-form.js) *@
+                            <select asp-for="CauHoiId" class="form-select">
+                                <option value="">-- Chọn câu hỏi trắc nghiệm --</option>
+                                @foreach (var c in cauHois)
+                                {
+                                    var ten = c.NoiDung.Length > 90 ? c.NoiDung[..90] + "…" : c.NoiDung;
+                                    <option value="@c.Id" data-mon-hoc-id="@c.MonHocId" data-so-dap-an="@c.SoDapAn"
+                                            title="@c.NoiDung">#@c.Id - @ten (@c.SoDapAn đáp án)</option>
+                                }
+                            </select>
+                            <span asp-validation-for="CauHoiId" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    @* Đáp án hiện có của câu hỏi đang chọn (tải qua Ajax) *@
+                    <div id="khungDapAnHienCo" class="mb-3 d-none">
+                        <label class="form-label text-muted small mb-1">Đáp án hiện có</label>
+                        <ul id="dsDapAnHienCo" class="list-group list-group-flush border rounded small"></ul>
+                        <div class="form-text">
+                            Đáp án mới sẽ được thêm vào cuối với nhãn <strong id="nhanMoi"></strong>.
+                            Muốn sửa/xóa hoặc đổi thứ tự đáp án, hãy dùng chức năng <strong>Sửa câu hỏi</strong>.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="NoiDung" class="form-label"></label>
+                        <textarea asp-for="NoiDung" class="form-control" rows="3" placeholder="Nhập nội dung đáp án"></textarea>
+                        <span asp-validation-for="NoiDung" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input asp-for="DapAnDung" class="form-check-input" />
+                        <label asp-for="DapAnDung" class="form-check-label"></label>
+                    </div>
+
+                    <div class="d-flex flex-wrap justify-content-end gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Lưu
+                        </button>
+                        <button type="submit" name="themTiep" value="true" class="btn btn-outline-primary">
+                            <i class="bi bi-plus-circle"></i> Lưu &amp; thêm đáp án khác
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Hủy
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/dapan-form.js" asp-append-version="true"></script>
+}

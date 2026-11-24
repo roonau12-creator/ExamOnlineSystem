@@ -1,0 +1,123 @@
+@using ExamOnlineSystem.Models.ViewModels
+@using ExamOnlineSystem.Utility
+@model PhanBoDiemVM
+@{
+    var de = (DeThi)ViewData["DeThi"]!;
+    ViewData["Title"] = "Phân bổ điểm – đề " + de.MaDeThi;
+    var mauMucDo = new Dictionary<int, string> { [1] = "success", [2] = "info", [3] = "warning", [4] = "danger" };
+}
+
+<form asp-action="PhanBoDiem" method="post" id="frmPhanBo">
+    <input type="hidden" asp-for="DeThiId" />
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <h3 class="text-black-50 mb-0"><i class="bi bi-calculator"></i> Phân bổ điểm – đề @de.MaDeThi</h3>
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle"></i> Lưu điểm</button>
+            <a asp-controller="DeThi" asp-action="Details" asp-route-id="@de.Id" class="btn btn-secondary"><i class="bi bi-x-circle"></i> Hủy</a>
+        </div>
+    </div>
+
+    <div asp-validation-summary="All" class="text-danger"></div>
+
+    @if (Model.Cau.Count == 0)
+    {
+        <div class="alert alert-info"><i class="bi bi-info-circle"></i> Đề chưa có câu hỏi nào để phân bổ điểm.</div>
+    }
+    else
+    {
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+                <div class="row g-3 align-items-end">
+                    <div class="col-6 col-md-2">
+                        <label asp-for="TongDiem" class="form-label"></label>
+                        <input asp-for="TongDiem" type="number" step="0.25" min="0.25" class="form-control" />
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <label for="buoc" class="form-label">Làm tròn tới</label>
+                        <select id="buoc" class="form-select">
+                            <option value="0.25" selected>0.25 điểm</option>
+                            <option value="0.5">0.5 điểm</option>
+                            <option value="1">1 điểm</option>
+                            <option value="0.1">0.1 điểm</option>
+                            <option value="0.01">0.01 điểm</option>
+                        </select>
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label">Phân bổ nhanh</label>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="button" class="btn btn-outline-primary" data-phan-bo="deu"><i class="bi bi-distribute-vertical"></i> Chia đều</button>
+                            <button type="button" class="btn btn-outline-primary" data-phan-bo="muc-do"><i class="bi bi-bar-chart-steps"></i> Theo mức độ</button>
+                            <button type="button" class="btn btn-outline-primary" data-phan-bo="mac-dinh" title="Tỷ lệ theo điểm mặc định của từng câu"><i class="bi bi-percent"></i> Theo điểm mặc định</button>
+                            <button type="button" class="btn btn-outline-secondary" data-phan-bo="ban-dau"><i class="bi bi-arrow-counterclockwise"></i> Ban đầu</button>
+                        </div>
+                    </div>
+                </div>
+
+                @* Hệ số dùng cho "Theo mức độ" *@
+                <div class="row g-2 mt-2 small align-items-center">
+                    <div class="col-auto text-muted">Hệ số theo mức độ:</div>
+                    @foreach (var (md, heSo) in new[] { (1, 1.0), (2, 1.5), (3, 2.0), (4, 2.5) })
+                    {
+                        <div class="col-auto">
+                            <div class="input-group input-group-sm" style="width: 150px">
+                                <span class="input-group-text"><span class="badge text-bg-@mauMucDo[md]">@CauHoiLabel.TenMucDo(md)</span></span>
+                                <input type="number" step="0.1" min="0" class="form-control he-so" data-muc-do="@md" value="@heSo.ToString(System.Globalization.CultureInfo.InvariantCulture)" />
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div id="thanhTong" class="alert py-2 mb-3"></div>
+
+        <div class="card shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th class="bg-primary text-white-50">Câu</th>
+                            <th class="bg-primary text-white-50">Nội dung</th>
+                            <th class="bg-primary text-white-50">Loại</th>
+                            <th class="bg-primary text-white-50">Mức độ</th>
+                            <th class="bg-primary text-white-50 text-center">Điểm mặc định</th>
+                            <th class="bg-primary text-white-50 text-center" style="width: 150px">Điểm trong đề</th>
+                            <th class="bg-primary text-white-50 text-center">Tỷ trọng</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (var i = 0; i < Model.Cau.Count; i++)
+                        {
+                            var c = Model.Cau[i];
+                            <tr class="dong-cau" data-muc-do="@c.MucDo" data-mac-dinh="@c.DiemMacDinh.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                data-ban-dau="@c.Diem.ToString(System.Globalization.CultureInfo.InvariantCulture)">
+                                <td class="fw-semibold text-nowrap">Câu @c.ThuTu</td>
+                                <td>
+                                    <span class="text-muted">#@c.CauHoiId</span>
+                                    <span title="@c.NoiDung">@(c.NoiDung.Length > 80 ? c.NoiDung[..80] + "…" : c.NoiDung)</span>
+                                </td>
+                                <td class="text-nowrap">@CauHoiLabel.TenLoaiCauHoi(c.LoaiCauHoi)</td>
+                                <td><span class="badge text-bg-@(mauMucDo.GetValueOrDefault(c.MucDo, "secondary"))">@CauHoiLabel.TenMucDo(c.MucDo)</span></td>
+                                <td class="text-center text-muted">@c.DiemMacDinh</td>
+                                <td>
+                                    <input type="hidden" name="Cau[@i].Id" value="@c.Id" />
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" name="Cau[@i].Diem" step="0.01" min="0.01" required
+                                               class="form-control text-end o-diem" value="@c.Diem.ToString(System.Globalization.CultureInfo.InvariantCulture)" />
+                                        <span class="input-group-text">đ</span>
+                                    </div>
+                                </td>
+                                <td class="text-center text-muted ty-trong"></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</form>
+
+@section Scripts {
+    <script src="~/js/cauhoidethi-phanbodiem.js" asp-append-version="true"></script>
+}

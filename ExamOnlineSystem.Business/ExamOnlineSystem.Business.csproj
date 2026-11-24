@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net11.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\ExamOnlineSystem.DataAccess\ExamOnlineSystem.DataAccess.csproj" />
+      <ProjectReference Include="..\ExamOnlineSystem.Models\ExamOnlineSystem.Models.csproj" />
+      <ProjectReference Include="..\ExamOnlineSystem.Utility\ExamOnlineSystem.Utility.csproj" />
+    </ItemGroup>
+
+</Project>

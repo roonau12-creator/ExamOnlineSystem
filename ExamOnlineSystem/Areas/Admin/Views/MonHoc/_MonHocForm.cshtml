@@ -1,0 +1,78 @@
+@model MonHoc
+@* Các trường nhập liệu dùng chung cho Thêm / Sửa môn học *@
+<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <label asp-for="KhoaId" class="form-label"></label>
+        <select asp-for="KhoaId" asp-items='ViewData["KhoaList"] as SelectList' class="form-select"
+                data-bomon-url="@Url.Action("GetBoMonByKhoa")">
+            <option value="">-- Chọn khoa --</option>
+        </select>
+        <span asp-validation-for="KhoaId" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6 mb-3">
+        <label asp-for="BoMonId" class="form-label"></label>
+        <select asp-for="BoMonId" asp-items='ViewData["BoMonList"] as SelectList' class="form-select">
+            <option value="">-- Chọn bộ môn --</option>
+        </select>
+        <span asp-validation-for="BoMonId" class="text-danger"></span>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4 mb-3">
+        <label asp-for="MaMonHoc" class="form-label"></label>
+        <input asp-for="MaMonHoc" class="form-control" placeholder="Nhập mã môn học" />
+        <span asp-validation-for="MaMonHoc" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-8 mb-3">
+        <label asp-for="TenMonHoc" class="form-label"></label>
+        <input asp-for="TenMonHoc" class="form-control" placeholder="Nhập tên môn học" />
+        <span asp-validation-for="TenMonHoc" class="text-danger"></span>
+    </div>
+</div>
+
+<div class="mb-3">
+    <label asp-for="TenTiengAnh" class="form-label"></label>
+    <input asp-for="TenTiengAnh" class="form-control" placeholder="Nhập tên tiếng Anh (không bắt buộc)" />
+    <span asp-validation-for="TenTiengAnh" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="MoTa" class="form-label"></label>
+    <textarea asp-for="MoTa" class="form-control" rows="3" placeholder="Nhập mô tả (không bắt buộc)"></textarea>
+    <span asp-validation-for="MoTa" class="text-danger"></span>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <label asp-for="HinhThucThi" class="form-label"></label>
+        <select asp-for="HinhThucThi" asp-items='ViewData["HinhThucThiList"] as SelectList' class="form-select">
+            <option value="">-- Chọn hình thức thi --</option>
+        </select>
+        <span asp-validation-for="HinhThucThi" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6 mb-3">
+        <label asp-for="ThoiGianThi" class="form-label"></label>
+        <input asp-for="ThoiGianThi" type="number" min="1" max="600" class="form-control" placeholder="Ví dụ: 60" />
+        <span asp-validation-for="ThoiGianThi" class="text-danger"></span>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <label asp-for="SoThuTu" class="form-label"></label>
+        <input asp-for="SoThuTu" type="number" min="1" class="form-control" placeholder="Nhập số thứ tự" />
+        <span asp-validation-for="SoThuTu" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6 mb-3">
+        <label asp-for="TrangThai" class="form-label"></label>
+        <select asp-for="TrangThai" asp-items='ViewData["TrangThaiList"] as SelectList' class="form-select"></select>
+        <span asp-validation-for="TrangThai" class="text-danger"></span>
+    </div>
+</div>

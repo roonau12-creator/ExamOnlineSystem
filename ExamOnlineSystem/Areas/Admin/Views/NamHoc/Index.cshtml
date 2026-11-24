@@ -1,0 +1,30 @@
+@{
+    ViewData["Title"] = "Danh sách năm học";
+}
+<div class="text-center text-black-50">
+    <h3>Danh sách năm học</h3>
+</div>
+<div class="text-end mb-3">
+    <a asp-action="Create" class="btn btn-outline-danger"><i class="bi bi-plus-circle"></i> Thêm năm học</a>
+</div>
+<table id="tblNamHoc" class="table table-bordered table-hover w-100">
+    <thead>
+        <tr>
+            <th class="bg-primary text-white-50">STT</th>
+            <th class="bg-primary text-white-50">Mã năm học</th>
+            <th class="bg-primary text-white-50">Tên năm học</th>
+            <th class="bg-primary text-white-50">Ngày bắt đầu</th>
+            <th class="bg-primary text-white-50">Ngày kết thúc</th>
+            <th class="bg-primary text-white-50">Năm hiện tại</th>
+            <th class="bg-primary text-white-50">Chức năng</th>
+        </tr>
+    </thead>
+</table>
+
+<form id="deleteForm" method="post">
+    @Html.AntiForgeryToken()
+</form>
+
+@section Scripts {
+    <script src="~/js/namhoc.js" asp-append-version="true"></script>
+}

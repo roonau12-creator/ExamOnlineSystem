@@ -1,0 +1,348 @@
+@using ExamOnlineSystem.Utility
+@using ExamOnlineSystem.Models.ViewModels
+@model SinhVienDetailVM
+@{
+    var sv = Model.SinhVien;
+    ViewData["Title"] = "Sinh viên " + sv.HoTen;
+    var lhpNamNay = Model.LopHocPhans.Where(l => l.LaNamHienTai).ToList();
+    var lhpKhac = Model.LopHocPhans.Where(l => !l.LaNamHienTai).ToList();
+    var daThi = Model.LichThis.Where(l => l.DiemHe10.HasValue).ToList();
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h3 class="text-black-50 mb-0">Chi tiết sinh viên</h3>
+    <div class="d-flex flex-wrap gap-2">
+        <a href="#lich-su-thi" class="btn btn-outline-secondary"><i class="bi bi-clock-history"></i> Lịch sử thi</a>
+        <a asp-controller="ThongKe" asp-action="SinhVienChiTiet" asp-route-id="@sv.Id" class="btn btn-outline-success">
+            <i class="bi bi-bar-chart"></i> Thống kê
+        </a>
+        <a asp-action="Edit" asp-route-id="@sv.Id" class="btn btn-primary"><i class="bi bi-pencil-square"></i> Sửa</a>
+        <button type="button" id="btnXoaSinhVien" class="btn btn-outline-danger"
+                data-url="@Url.Action("DeleteSinhVien", new { id = sv.Id })"
+                data-name="@sv.MaSinhVien – @sv.HoTen"
+                data-back="@Url.Action("Index")">
+            <i class="bi bi-trash3"></i> Xóa
+        </button>
+        <a asp-action="Index" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Quay lại danh sách</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-mortarboard"></i> @sv.HoTen</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Mã sinh viên</dt>
+                    <dd class="col-sm-8">@sv.MaSinhVien</dd>
+
+                    <dt class="col-sm-4">Ngày sinh</dt>
+                    <dd class="col-sm-8">@sv.NgaySinh.ToString("dd/MM/yyyy")</dd>
+
+                    @* GioiTinh: true = Nam, false = Nữ *@
+                    <dt class="col-sm-4">Giới tính</dt>
+                    <dd class="col-sm-8">@(sv.GioiTinh ? "Nam" : "Nữ")</dd>
+
+                    <dt class="col-sm-4">Email</dt>
+                    <dd class="col-sm-8"><a href="mailto:@sv.Email">@sv.Email</a></dd>
+
+                    <dt class="col-sm-4">Số điện thoại</dt>
+                    <dd class="col-sm-8 mb-0">@sv.SoDienThoai</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100 border-info">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-people"></i> Lớp &amp; tài khoản</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Lớp</dt>
+                    <dd class="col-sm-8">
+                        @if (sv.Lop != null)
+                        {
+                            <a asp-controller="Lop" asp-action="Details" asp-route-id="@sv.LopId">@sv.Lop.MaLop – @sv.Lop.TenLop</a>
+                        }
+                        else
+                        {
+                            <span>—</span>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-4">Khoa</dt>
+                    <dd class="col-sm-8">@(sv.Khoa?.TenKhoa ?? "—")</dd>
+
+                    <dt class="col-sm-4">Tài khoản</dt>
+                    <dd class="col-sm-8">
+                        @if (Model.DangHoatDong == null)
+                        {
+                            <span class="badge text-bg-warning">Không có tài khoản</span>
+                        }
+                        else if (Model.DangHoatDong == true)
+                        {
+                            <span class="badge text-bg-success">Đang hoạt động</span>
+                        }
+                        else
+                        {
+                            <span class="badge text-bg-secondary"><i class="bi bi-lock-fill"></i> Đã khóa</span>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-4">Đăng nhập gần nhất</dt>
+                    <dd class="col-sm-8">@(Model.LanDangNhapCuoi?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "Chưa đăng nhập")</dd>
+
+                    <dt class="col-sm-4">Học tập</dt>
+                    <dd class="col-sm-8 mb-0">
+                        @lhpNamNay.Count lớp học phần năm nay ·
+                        @daThi.Count / @Model.LichThis.Count lịch thi có điểm
+                        @if (daThi.Count > 0)
+                        {
+                            <span>· ĐTB @daThi.Average(l => l.DiemHe10!.Value).ToString("0.00")</span>
+                        }
+                    </dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ===== Lớp học phần ===== *@
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white">
+        <h5 class="mb-0"><i class="bi bi-journal-text"></i> Lớp học phần đang học <span class="badge text-bg-secondary">@lhpNamNay.Count</span></h5>
+    </div>
+    <div class="card-body">
+        @if (lhpNamNay.Count == 0)
+        {
+            <p class="text-muted mb-0"><i class="bi bi-info-circle"></i> Sinh viên chưa có lớp học phần nào trong năm học hiện tại.</p>
+        }
+        else
+        {
+            <partial name="_BangLopHocPhanSV" model="lhpNamNay" />
+        }
+
+        @if (lhpKhac.Count > 0)
+        {
+            <details class="mt-3">
+                <summary class="text-primary" role="button">Các năm học khác (@lhpKhac.Count lớp)</summary>
+                <div class="mt-2">
+                    <partial name="_BangLopHocPhanSV" model="lhpKhac" />
+                </div>
+            </details>
+        }
+    </div>
+</div>
+
+@* ===== Lịch thi & kết quả ===== *@
+<div class="card shadow-sm">
+    <div class="card-header bg-white">
+        <h5 class="mb-0"><i class="bi bi-calendar-check"></i> Lịch thi &amp; kết quả <span class="badge text-bg-secondary">@Model.LichThis.Count</span></h5>
+    </div>
+    <div class="card-body">
+        @if (Model.LichThis.Count == 0)
+        {
+            <p class="text-muted mb-0"><i class="bi bi-info-circle"></i> Sinh viên chưa có trong lịch thi nào.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th class="bg-primary text-white-50">Lịch thi</th>
+                            <th class="bg-primary text-white-50">Thời gian</th>
+                            <th class="bg-primary text-white-50 text-center">Trạng thái</th>
+                            <th class="bg-primary text-white-50 text-center">Điểm</th>
+                            <th class="bg-primary text-white-50 text-center">Xếp loại</th>
+                            <th class="bg-primary text-white-50"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var lt in Model.LichThis)
+                        {
+                            var xepLoai = KetQuaLabel.XepLoai(lt.DiemHe10);
+                            <tr>
+                                <td>
+                                    <span class="fw-semibold">@lt.TenLichThi</span>
+                                    <div class="small text-muted">@lt.TenDeThi</div>
+                                </td>
+                                <td class="text-nowrap small">
+                                    @lt.ThoiGianBatDau.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                    – @lt.ThoiGianKetThuc.ToLocalTime().ToString("HH:mm")
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge text-bg-@KetQuaLabel.MauTrangThai(lt.TrangThai)">@KetQuaLabel.TenTrangThai(lt.TrangThai)</span>
+                                    @if (lt.SoLuotThi > 1)
+                                    {
+                                        <div class="small text-muted">@lt.SoLuotThi lượt</div>
+                                    }
+                                </td>
+                                <td class="text-center text-nowrap">
+                                    @if (lt.Diem.HasValue)
+                                    {
+                                        <span class="fw-semibold">@lt.Diem.Value.ToString("0.##")</span><span class="text-muted">/@lt.TongDiem.ToString("0.##")</span>
+                                        <div class="small text-muted">@lt.DiemHe10!.Value.ToString("0.00") / 10</div>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">—</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge text-bg-@KetQuaLabel.MauXepLoai(xepLoai)">@xepLoai</span>
+                                </td>
+                                <td class="text-center text-nowrap">
+                                    @if (lt.LanThiMoiNhatId != null)
+                                    {
+                                        <a asp-controller="KetQuaThi" asp-action="BaiLam" asp-route-id="@lt.LanThiMoiNhatId" class="btn btn-sm btn-outline-info">
+                                            <i class="bi bi-file-earmark-text"></i> Bài làm
+                                        </a>
+                                    }
+                                    <a asp-controller="KetQuaThi" asp-action="Details" asp-route-id="@lt.LichThiId" class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-list-ol"></i> Kết quả lịch thi
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@* ===== Lịch sử thi: từng lượt làm bài ===== *@
+@{
+    var lanCoDiem = Model.LanThis.Where(l => l.DiemHe10.HasValue).ToList();
+}
+<div class="card shadow-sm mt-4" id="lich-su-thi">
+    <div class="card-header bg-white">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <h5 class="mb-0"><i class="bi bi-clock-history"></i> Lịch sử thi <span class="badge text-bg-secondary">@Model.LanThis.Count lượt</span></h5>
+            @if (lanCoDiem.Count > 0)
+            {
+                <span class="small text-muted">
+                    Cao nhất <strong>@lanCoDiem.Max(l => l.DiemHe10!.Value).ToString("0.00")</strong> ·
+                    thấp nhất <strong>@lanCoDiem.Min(l => l.DiemHe10!.Value).ToString("0.00")</strong> ·
+                    trung bình <strong>@lanCoDiem.Average(l => l.DiemHe10!.Value).ToString("0.00")</strong> (thang 10)
+                </span>
+            }
+        </div>
+    </div>
+    <div class="card-body">
+        @if (Model.LanThis.Count == 0)
+        {
+            <p class="text-muted mb-0"><i class="bi bi-info-circle"></i> Sinh viên chưa làm bài thi nào.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th class="bg-primary text-white-50">Lịch thi</th>
+                            <th class="bg-primary text-white-50 text-center">Lần</th>
+                            <th class="bg-primary text-white-50">Bắt đầu</th>
+                            <th class="bg-primary text-white-50">Nộp bài</th>
+                            <th class="bg-primary text-white-50 text-center">Thời gian làm</th>
+                            <th class="bg-primary text-white-50 text-center">Trạng thái</th>
+                            <th class="bg-primary text-white-50 text-center">Điểm</th>
+                            <th class="bg-primary text-white-50"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var lan in Model.LanThis)
+                        {
+                            var mauLan = lan.TrangThai switch { 1 => "success", 2 => "danger", _ => "warning" };
+                            <tr>
+                                <td>
+                                    <span class="fw-semibold">@lan.TenLichThi</span>
+                                    <div class="small text-muted">@lan.TenMonHoc</div>
+                                </td>
+                                <td class="text-center">@lan.LanThu</td>
+                                <td class="text-nowrap small">@lan.ThoiGianBatDau.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                <td class="text-nowrap small">@(lan.ThoiGianNopBai?.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss") ?? "—")</td>
+                                <td class="text-center text-nowrap small">
+                                    @if (lan.ThoiGianLam is { } tg)
+                                    {
+                                        <span>@((int)tg.TotalMinutes) phút @tg.Seconds giây</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">—</span>
+                                    }
+                                    <div class="text-muted">/ @lan.ThoiLuong phút</div>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge text-bg-@mauLan">@KetQuaLabel.TenTrangThaiLanThi(lan.TrangThai)</span>
+                                </td>
+                                <td class="text-center text-nowrap">
+                                    @if (lan.Diem.HasValue)
+                                    {
+                                        <span class="fw-semibold">@lan.Diem.Value.ToString("0.##")</span><span class="text-muted">/@lan.TongDiem.ToString("0.##")</span>
+                                        <div class="small text-muted">@lan.DiemHe10!.Value.ToString("0.00") / 10</div>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">—</span>
+                                    }
+                                </td>
+                                <td class="text-center text-nowrap">
+                                    <a asp-controller="KetQuaThi" asp-action="BaiLam" asp-route-id="@lan.Id" class="btn btn-sm btn-outline-info">
+                                        <i class="bi bi-file-earmark-text"></i> Bài làm
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+<form id="deleteForm" method="post">
+    @Html.AntiForgeryToken()
+</form>
+
+@section Scripts {
+    <script>
+        $("#btnXoaSinhVien").on("click", function () {
+            var btn = this;
+            Swal.fire({
+                title: "Bạn có chắc chắn?",
+                text: "Sinh viên \"" + btn.dataset.name + "\" và tài khoản đăng nhập của sinh viên sẽ bị xóa, không thể hoàn tác!",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#d33",
+                cancelButtonColor: "#6c757d",
+                confirmButtonText: "Xóa",
+                cancelButtonText: "Hủy",
+                reverseButtons: true
+            }).then(function (result) {
+                if (!result.isConfirmed) {
+                    return;
+                }
+                $.ajax({
+                    url: btn.dataset.url,
+                    type: "DELETE",
+                    headers: { "RequestVerificationToken": $("#deleteForm input[name='__RequestVerificationToken']").val() }
+                }).done(function (res) {
+                    if (res.success) {
+                        toastr.success(res.message);
+                        setTimeout(function () { location.href = btn.dataset.back; }, 800);
+                    } else {
+                        Swal.fire({ icon: "error", title: "Không xóa được", text: res.message });
+                    }
+                }).fail(function () {
+                    toastr.error("Có lỗi xảy ra khi xóa sinh viên");
+                });
+            });
+        });
+    </script>
+}

@@ -1,0 +1,101 @@
+@using ExamOnlineSystem.Models.ViewModels
+@using ExamOnlineSystem.Utility
+@model TronDeVM
+@{
+    var goc = (DeThi)ViewData["DeGoc"]!;
+    var cauGoc = ViewData["CauGoc"] as List<(int ThuTu, int CauHoiId, double Diem, string NoiDung, int Loai)> ?? new();
+    ViewData["Title"] = "Trộn đề " + goc.MaDeThi;
+    var soCachTron = cauGoc.Count < 2 ? 0 : Enumerable.Range(2, Math.Max(0, cauGoc.Count - 1)).Aggregate(1L, (a, b) => a >= 1_000_000 ? a : a * b) - 1;
+}
+<div class="row justify-content-center">
+    <div class="col-lg-10 col-xl-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="bi bi-shuffle"></i> Trộn đề @goc.MaDeThi</h4>
+            </div>
+            <div class="card-body">
+                <p class="mb-2">
+                    Tạo nhiều đề mới từ đề gốc <strong>@goc.MaDeThi – @goc.TenDeThi</strong>:
+                    cùng câu hỏi, cùng điểm từng câu, cùng thời lượng (@goc.ThoiLuong phút) và loại đề (@DeThiLabel.TenLoaiDeThi(goc.LoaiDeThi)),
+                    nhưng <strong>thứ tự câu được xáo ngẫu nhiên</strong> (khác đề gốc và khác nhau giữa các đề), có thể trộn cả thứ tự đáp án.
+                </p>
+
+                <h6 class="text-muted mt-3">Câu hỏi của đề gốc (@cauGoc.Count câu)</h6>
+                @if (cauGoc.Count == 0)
+                {
+                    <p class="text-muted"><i class="bi bi-info-circle"></i> Đề chưa có câu hỏi nào.</p>
+                }
+                else
+                {
+                    <ol class="list-group list-group-numbered small mb-3">
+                        @foreach (var c in cauGoc)
+                        {
+                            <li class="list-group-item d-flex gap-2">
+                                <span class="me-auto"><span class="text-muted">#@c.CauHoiId</span> @(c.NoiDung.Length > 100 ? c.NoiDung[..100] + "…" : c.NoiDung)</span>
+                                <span class="badge text-bg-light border">@CauHoiLabel.TenLoaiCauHoi(c.Loai)</span>
+                                <span class="text-nowrap">@c.Diem đ</span>
+                            </li>
+                        }
+                    </ol>
+                }
+
+                <form asp-action="TronDe" method="post">
+                    <input type="hidden" asp-for="DeThiGocId" />
+                    <div asp-validation-summary="All" class="text-danger"></div>
+
+                    <div class="row g-3 mb-2">
+                        <div class="col-md-4">
+                            <label asp-for="SoDe" class="form-label"></label>
+                            <input asp-for="SoDe" type="number" min="1" max="@TronDeVM.SoDeToiDa" class="form-control" />
+                            @if (cauGoc.Count >= 2)
+                            {
+                                <div class="form-text">Tối đa @Math.Min(soCachTron, TronDeVM.SoDeToiDa) đề.</div>
+                            }
+                        </div>
+                        <div class="col-md-8">
+                            <label asp-for="TienToMa" class="form-label"></label>
+                            <input asp-for="TienToMa" class="form-control" />
+                            <div class="form-text">
+                                Mã đề mới: <code id="xemMa"></code> (tự bỏ qua các số đã có).
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-check mt-2">
+                        <input asp-for="TronDapAn" class="form-check-input" />
+                        <label asp-for="TronDapAn" class="form-check-label"></label>
+                        <div class="form-text">Mỗi câu trắc nghiệm trong mỗi đề mới có thứ tự A/B/C/D riêng (khác đề gốc). Bỏ chọn để giữ nguyên thứ tự đáp án của đề gốc.</div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-3">
+                        <button type="submit" class="btn btn-primary" @(cauGoc.Count < 2 ? "disabled" : "")>
+                            <i class="bi bi-shuffle"></i> Trộn đề
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Hủy
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Xem trước mã đề sẽ tạo (chưa tính các số đã có, server sẽ tự bỏ qua)
+        $(function () {
+            function capNhat() {
+                var tienTo = $.trim($("#TienToMa").val());
+                var n = Math.min(parseInt($("#SoDe").val(), 10) || 0, 20);
+                var ds = [];
+                for (var i = 1; i <= Math.min(n, 3); i++) ds.push(tienTo + i);
+                if (n > 3) ds.push("…", tienTo + n);
+                $("#xemMa").text(ds.join(", "));
+            }
+            $("#TienToMa, #SoDe").on("input", capNhat);
+            capNhat();
+        });
+    </script>
+}
