@@ -1,0 +1,226 @@
+@using ExamOnlineSystem.Models.ViewModels
+@using ExamOnlineSystem.Utility
+@model LamBaiVM
+@{
+    ViewData["Title"] = "Làm bài · " + Model.TenMonHoc;
+    var soGiayConLai = Model.SoGiayConLai(DateTime.UtcNow);
+    var hetHan = Model.HetHan.ToLocalTime();
+    var dongLuc = Model.LichThiKetThuc.ToLocalTime();
+}
+
+<div class="container-xl py-3" id="trangLamBai"
+     data-lan-thi-id="@Model.LanThiId"
+     data-so-cau="@Model.SoCau"
+     data-so-giay="@soGiayConLai">
+
+    @* ===== Thanh thông tin + đồng hồ (dính trên cùng khi cuộn) ===== *@
+    <div class="card shadow-sm mb-3 sticky-top" style="top: 4.2rem; z-index: 1019">
+        <div class="card-body py-2 px-3">
+            <div class="row g-2 align-items-center">
+                <div class="col-lg-5">
+                    <div class="fw-semibold text-truncate">
+                        <i class="bi bi-journal-text text-primary"></i> @Model.TenMonHoc
+                        <span class="text-muted fw-normal">· mã đề @Model.MaDeThi</span>
+                    </div>
+                    <div class="small text-muted text-truncate">
+                        @Model.HoTen · @Model.MaSinhVien@(string.IsNullOrEmpty(Model.MaLop) ? "" : " · " + Model.MaLop)
+                        @if (Model.SoLanThi > 1)
+                        {
+                            <span>· lần thi @Model.LanThu</span>
+                        }
+                    </div>
+                </div>
+
+                <div class="col-lg-3 text-lg-center">
+                    <div class="d-flex align-items-center justify-content-lg-center gap-2">
+                        <i class="bi bi-stopwatch fs-4 text-secondary"></i>
+                        <div>
+                            <div id="dongHo" class="fs-4 fw-bold lh-1 font-monospace">--:--</div>
+                            <div class="small text-muted">phải nộp trước @hetHan.ToString("HH:mm")</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between small">
+                                <span>Đã làm <strong id="soCauDaLam">@Model.SoCauDaLam</strong>/@Model.SoCau câu</span>
+                                <span id="trangThaiLuu" class="text-muted"><i class="bi bi-cloud-check"></i> Tự động lưu</span>
+                            </div>
+                            <div class="progress mt-1" style="height: 6px" role="progressbar" aria-label="Tiến độ làm bài">
+                                <div id="thanhTienDo" class="progress-bar bg-success" style="width: @Model.TiLeDaLam%"></div>
+                            </div>
+                        </div>
+                        <button type="button" id="btnNopBai" class="btn btn-success text-nowrap">
+                            <i class="bi bi-send-check"></i> Nộp bài
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="alert alert-danger py-2 small">
+        <i class="bi bi-shield-exclamation"></i>
+        <strong>Không mở hoặc chuyển sang tab, cửa sổ khác</strong> (kể cả thu nhỏ trình duyệt) trong lúc thi.
+        Vi phạm sẽ bị đình chỉ ngay và không được làm bài tiếp.
+    </div>
+
+    @if (Model.BiCatTheoGioDong)
+    {
+        <div class="alert alert-warning py-2 small">
+            <i class="bi bi-exclamation-triangle"></i>
+            Kỳ thi đóng lúc <strong>@dongLuc.ToString("HH:mm")</strong>, sớm hơn @Model.ThoiLuong phút làm bài,
+            nên bài của bạn sẽ tự nộp vào lúc đó.
+        </div>
+    }
+
+    <div class="row g-3">
+        @* ===== Bảng câu hỏi (cột phải trên màn hình lớn) ===== *@
+        <div class="col-lg-3 order-lg-2">
+            <div class="card shadow-sm lb-bang-cau">
+                <div class="card-header bg-white py-2"><strong><i class="bi bi-grid-3x3-gap"></i> Danh sách câu</strong></div>
+                <div class="card-body py-3">
+                    <div class="d-flex flex-wrap gap-2" id="bangCau">
+                        @foreach (var c in Model.CauHois)
+                        {
+                            <button type="button" class="btn btn-sm lb-o-cau @(c.DaTraLoi ? "btn-success" : "btn-outline-secondary")"
+                                    data-cau="@c.CauHoiLanThiId" data-thu-tu="@c.ThuTu" title="Câu @c.ThuTu">
+                                @c.ThuTu
+                            </button>
+                        }
+                    </div>
+
+                    <hr class="my-3" />
+                    <div class="small text-muted">
+                        <div><span class="badge text-bg-success">&nbsp;</span> đã làm</div>
+                        <div><span class="badge text-bg-secondary">&nbsp;</span> chưa làm</div>
+                        <div><i class="bi bi-flag-fill text-warning"></i> đánh dấu xem lại</div>
+                    </div>
+                    <div class="d-grid mt-3">
+                        <button type="button" id="btnNopBaiDuoi" class="btn btn-success btn-sm">
+                            <i class="bi bi-send-check"></i> Nộp bài
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* ===== Câu hỏi ===== *@
+        <div class="col-lg-9 order-lg-1">
+            @if (Model.SoCau == 0)
+            {
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-octagon"></i> Đề thi không có câu hỏi nào. Vui lòng báo giảng viên @Model.TenGiaoVien.
+                </div>
+            }
+
+            @foreach (var c in Model.CauHois)
+            {
+                <div class="card shadow-sm mb-3 lb-cau" id="cau-@c.ThuTu" data-cau="@c.CauHoiLanThiId" data-thu-tu="@c.ThuTu" data-loai="@c.LoaiCauHoi">
+                    <div class="card-header bg-white d-flex flex-wrap align-items-center gap-2 py-2">
+                        <strong class="text-nowrap">Câu @c.ThuTu</strong>
+                        <span class="badge text-bg-light text-dark border">@CauHoiLabel.TenLoaiCauHoi(c.LoaiCauHoi)</span>
+                        <span class="small text-muted">@c.Diem.ToString("0.##") điểm</span>
+                        @if (c.ChonNhieu)
+                        {
+                            <span class="badge text-bg-warning text-dark">Chọn nhiều đáp án</span>
+                        }
+                        <button type="button" class="btn btn-sm btn-link text-decoration-none ms-auto lb-danh-dau p-0"
+                                data-cau="@c.CauHoiLanThiId" title="Đánh dấu để xem lại">
+                            <i class="bi bi-flag"></i> <span class="d-none d-sm-inline">Đánh dấu</span>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div style="white-space: pre-line">@c.NoiDung</div>
+
+                        @if (c.CoHinhAnh)
+                        {
+                            <img src="@Url.Action("HinhAnh", "LamBai", new { id = c.CauHoiLanThiId })"
+                                 alt="Hình minh họa câu @c.ThuTu" class="img-fluid img-thumbnail mt-2" style="max-height: 320px" />
+                        }
+
+                        @if (c.LoaiCauHoi == 2)
+                        {
+                            <textarea class="form-control mt-3 lb-tu-luan" rows="6" maxlength="20000"
+                                      placeholder="Nhập câu trả lời của bạn...">@c.NoiDungTraLoi</textarea>
+                            <div class="small text-muted mt-1">Bài làm được lưu tự động sau khi bạn ngừng nhập vài giây.</div>
+                        }
+                        else if (c.DapAns.Count == 0)
+                        {
+                            <div class="alert alert-warning mt-3 mb-0 py-2 small">
+                                <i class="bi bi-exclamation-triangle"></i> Câu này chưa có đáp án. Hãy báo giảng viên.
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="mt-3">
+                                @for (var i = 0; i < c.DapAns.Count; i++)
+                                {
+                                    var d = c.DapAns[i];
+                                    var idInput = $"da_{d.Id}";
+                                    <div class="form-check lb-lua-chon rounded py-2 px-4">
+                                        <input class="form-check-input lb-dap-an" type="@(c.ChonNhieu ? "checkbox" : "radio")"
+                                               name="cau_@c.CauHoiLanThiId" id="@idInput" value="@d.Id" @(d.DaChon ? "checked" : "") />
+                                        <label class="form-check-label d-block" for="@idInput">
+                                            <strong>@ThuTuDapAnHelper.Nhan(i).</strong> @d.NoiDung
+                                        </label>
+                                    </div>
+                                }
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary mt-2 lb-bo-chon @(c.DaTraLoi ? "" : "d-none")">
+                                <i class="bi bi-eraser"></i> Bỏ chọn
+                            </button>
+                        }
+                    </div>
+                </div>
+            }
+
+            @if (Model.SoCau > 0)
+            {
+                <div class="card shadow-sm mb-3">
+                    <div class="card-body text-center">
+                        <p class="mb-2">Hãy kiểm tra lại các câu trước khi nộp. Sau khi nộp bạn không sửa được bài làm.</p>
+                        <button type="button" id="btnNopBaiCuoi" class="btn btn-success btn-lg">
+                            <i class="bi bi-send-check"></i> Nộp bài
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    @* Form nộp bài (dùng cho cả nộp tay và tự nộp khi hết giờ) *@
+    <form asp-action="NopBai" asp-route-id="@Model.LanThiId" method="post" id="frmNopBai">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="tuDong" id="nopTuDong" value="false" />
+    </form>
+</div>
+
+<style>
+    /* Ô câu trong bảng câu hỏi */
+    .lb-o-cau { width: 42px; position: relative; }
+    .lb-o-cau.lb-dang-xem { box-shadow: 0 0 0 .2rem rgba(13,110,253,.35); }
+    .lb-o-cau.lb-co-dau-sao::after {
+        content: "\f3cb"; /* bi-flag-fill */
+        font-family: bootstrap-icons;
+        position: absolute; top: -6px; right: -4px; font-size: 10px; color: #ffc107;
+    }
+    /* Lựa chọn đáp án: cả dòng bấm được */
+    .lb-lua-chon { cursor: pointer; }
+    .lb-lua-chon:hover { background-color: #f1f6ff; }
+    .lb-lua-chon label { cursor: pointer; }
+    .lb-lua-chon:has(.form-check-input:checked) { background-color: #e7f1ff; }
+    /* Bảng câu hỏi dính theo khi cuộn trên màn hình lớn */
+    @@media (min-width: 992px) {
+        .lb-bang-cau { position: sticky; top: 9.5rem; }
+    }
+    #dongHo.lb-gan-het { color: #fd7e14; }
+    #dongHo.lb-sap-het { color: #dc3545; animation: lbNhay 1s infinite; }
+    @@keyframes lbNhay { 50% { opacity: .35; } }
+</style>
+
+@section Scripts {
+    <script src="~/js/lambai.js" asp-append-version="true"></script>
+}

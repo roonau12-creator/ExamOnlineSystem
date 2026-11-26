@@ -85,7 +85,7 @@ public class LichThiController : Controller
             KyThi = kyThi,
             SinhVien = sinhVien,
             KiemTras = KiemTraDieuKien(kyThi, user?.DangHoatDong == true, DateTime.UtcNow),
-            CoTrangLamBai = false
+            CoTrangLamBai = true
         });
     }
 
@@ -125,8 +125,10 @@ public class LichThiController : Controller
             }
         }
 
+        var biDinhChi = k.LanThis.Any(l => l.TrangThai == 3);
         ds.Add(k.TrangThai switch
         {
+            2 when biDinhChi => new() { Ten = "Không vi phạm quy chế", MoTa = "Bạn đã bị đình chỉ thi do mở tab khác trong lúc làm bài.", MucDo = MucDoKiemTra.KhongDat },
             2 => new() { Ten = "Chưa nộp bài", MoTa = "Bạn đã nộp bài cho kỳ thi này.", MucDo = MucDoKiemTra.KhongDat },
             1 => new() { Ten = "Chưa nộp bài", MoTa = "Bạn đang có bài làm dở; vào thi sẽ tiếp tục bài đó.", MucDo = MucDoKiemTra.CanhBao },
             _ => new() { Ten = "Chưa nộp bài", MoTa = "Bạn chưa làm bài kỳ thi này.", MucDo = MucDoKiemTra.Dat }

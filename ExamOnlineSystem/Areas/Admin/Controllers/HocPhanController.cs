@@ -22,6 +22,7 @@ public class HocPhanController : Controller
     }
 
     // GET: /HocPhan
+    [AllowAnonymous]
     public async Task<IActionResult> Index()
     {
         var hocPhans = await _hocPhanService.GetAllHocPhanAsync();
@@ -67,6 +68,7 @@ public class HocPhanController : Controller
         await LoadDropdowns(hocPhan.KhoaId, hocPhan.MonHocId);
         return View(hocPhan);
     }
+
 
     [HttpPost]
     [ValidateAntiForgeryToken]

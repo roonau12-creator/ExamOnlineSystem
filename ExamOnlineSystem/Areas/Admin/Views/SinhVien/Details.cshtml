@@ -258,7 +258,7 @@
                     <tbody>
                         @foreach (var lan in Model.LanThis)
                         {
-                            var mauLan = lan.TrangThai switch { 1 => "success", 2 => "danger", _ => "warning" };
+                            var mauLan = lan.TrangThai switch { 1 => "success", 2 or 3 => "danger", _ => "warning" };
                             <tr>
                                 <td>
                                     <span class="fw-semibold">@lan.TenLichThi</span>

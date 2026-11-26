@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation();
+builder.Services.AddControllersWithViews();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -27,6 +27,7 @@ builder.Services.AddScoped<ILichThiService, LichThiService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IKetQuaThiService, KetQuaThiService>();
 builder.Services.AddScoped<IThongKeService, ThongKeService>();
+builder.Services.AddScoped<ILamBaiService, LamBaiService>();
 builder.Services.AddSingleton<ExamOnlineSystem.Services.HinhAnhCauHoiStorage>();
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     {

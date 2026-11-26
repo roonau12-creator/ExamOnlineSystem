@@ -12,12 +12,14 @@
         dsAction.Contains(action, StringComparer.OrdinalIgnoreCase) ? "active" : "";
 
     var laQuanTri = User.IsInRole(SD.Role_Admin);
+    var laGiangVien = User.IsInRole(SD.Role_Teacher);
 }
 
 <nav class="admin-sidebar nav flex-column nav-pills p-3 gap-1">
-    <small class="text-uppercase text-white-50 fw-bold px-2 mb-1" style="font-size:11px">Tổng quan</small>
-    <a class="nav-link text-white" asp-area="Customer" asp-controller="Home" asp-action="Index">
-        <i class="bi bi-house me-2"></i>Trang chủ
+    <small class="text-uppercase text-white-50 fw-bold px-2 mt-3 mb-1" style="font-size:11px">Thống kê</small>
+    <a class="nav-link text-white @ActiveHanhDong("ThongKe", "Index")"
+       asp-area="Admin" asp-controller="ThongKe" asp-action="Index">
+        <i class="bi bi-speedometer2 me-2"></i>Dashboard
     </a>
 
     <small class="text-uppercase text-white-50 fw-bold px-2 mt-3 mb-1" style="font-size:11px">Danh mục</small>
@@ -30,6 +32,8 @@
             <i class="bi bi-calendar3 me-2"></i>Năm học
         </a>
     }
+    @if(laQuanTri || laGiangVien)
+    {
     <a class="nav-link text-white @Active("BoMon")" asp-area="Admin" asp-controller="BoMon" asp-action="Index">
         <i class="bi bi-diagram-3 me-2"></i>Bộ môn
     </a>
@@ -48,18 +52,22 @@
     <a class="nav-link text-white @Active("SinhVien")" asp-area="Admin" asp-controller="SinhVien" asp-action="Index">
         <i class="bi bi-person-vcard me-2"></i>Sinh viên
     </a>
+    }
+    @if(laQuanTri)
+    {
     <a class="nav-link text-white @Active("GiaoVien")" asp-area="Admin" asp-controller="GiaoVien" asp-action="Index">
         <i class="bi bi-person-workspace me-2"></i>Giảng viên
     </a>
-
-    @if (laQuanTri)
+    }
+    @if (laQuanTri || laGiangVien)
     {
         <small class="text-uppercase text-white-50 fw-bold px-2 mt-3 mb-1" style="font-size:11px">Hệ thống</small>
         <a class="nav-link text-white @Active("User")" asp-area="Admin" asp-controller="User" asp-action="Index">
             <i class="bi bi-shield-lock me-2"></i>Quản lý tài khoản
         </a>
     }
-
+    @if(laGiangVien || laQuanTri)
+    {
     <small class="text-uppercase text-white-50 fw-bold px-2 mt-3 mb-1" style="font-size:11px">Ngân hàng câu hỏi</small>
     <a class="nav-link text-white @Active("DanhMucCauHoi")" asp-area="Admin" asp-controller="DanhMucCauHoi" asp-action="Index">
         <i class="bi bi-folder2-open me-2"></i>Danh mục câu hỏi
@@ -86,26 +94,8 @@
     <a class="nav-link text-white @Active("KetQuaThi")" asp-area="Admin" asp-controller="KetQuaThi" asp-action="Index">
         <i class="bi bi-clipboard-data me-2"></i>Theo dõi kết quả thi
     </a>
+    }
 
-    <small class="text-uppercase text-white-50 fw-bold px-2 mt-3 mb-1" style="font-size:11px">Thống kê</small>
-    <a class="nav-link text-white @ActiveHanhDong("ThongKe", "Index")"
-       asp-area="Admin" asp-controller="ThongKe" asp-action="Index">
-        <i class="bi bi-speedometer2 me-2"></i>Dashboard
-    </a>
-    <a class="nav-link text-white @ActiveHanhDong("ThongKe", "GiaoVien", "GiaoVienChiTiet")"
-       asp-area="Admin" asp-controller="ThongKe" asp-action="GiaoVien">
-        <i class="bi bi-graph-up-arrow me-2"></i>Thống kê giảng viên
-    </a>
-    <a class="nav-link text-white @ActiveHanhDong("ThongKe", "SinhVien", "SinhVienChiTiet")"
-       asp-area="Admin" asp-controller="ThongKe" asp-action="SinhVien">
-        <i class="bi bi-mortarboard me-2"></i>Thống kê sinh viên
-    </a>
-    <a class="nav-link text-white @ActiveHanhDong("ThongKe", "Khoa", "KhoaChiTiet")"
-       asp-area="Admin" asp-controller="ThongKe" asp-action="Khoa">
-        <i class="bi bi-building me-2"></i>Thống kê khoa
-    </a>
-    <a class="nav-link text-white @ActiveHanhDong("ThongKe", "BoMon", "BoMonChiTiet")"
-       asp-area="Admin" asp-controller="ThongKe" asp-action="BoMon">
-        <i class="bi bi-diagram-3 me-2"></i>Thống kê bộ môn
-    </a>
+   
+
 </nav>

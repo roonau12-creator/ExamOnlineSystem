@@ -5,7 +5,7 @@
 @{
     ViewData["Title"] = $"Bài làm của {Model.HoTen}";
     var batDau = Model.ThoiGianBatDau.ToLocalTime();
-    var mauTt = Model.TrangThai == 1 ? "success" : Model.TrangThai == 2 ? "danger" : "warning";
+    var mauTt = Model.TrangThai == 1 ? "success" : Model.TrangThai >= 2 ? "danger" : "warning";
 }
 
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">

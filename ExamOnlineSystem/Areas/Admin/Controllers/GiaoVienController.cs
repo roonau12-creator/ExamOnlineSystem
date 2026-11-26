@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 namespace ExamOnlineSystem.Areas.Admin.Controllers;
 
 [Area("Admin")]
-[Authorize(Roles = SD.Role_Admin + "," + SD.Role_Teacher)]
+[Authorize(Roles = SD.Role_Admin)]
 public class GiaoVienController : Controller
 {
     private readonly IGiaoVienService _giaoVienService;
@@ -24,6 +24,7 @@ public class GiaoVienController : Controller
     }
 
     // GET: /Admin/GiaoVien?khoaId=6&boMonId=2 (chọn sẵn bộ lọc khi mở từ trang chi tiết khoa / bộ môn)
+    [Authorize(Roles =SD.Role_Admin)]
     public async Task<IActionResult> Index(int? khoaId, int? boMonId)
     {
         // Bộ lọc lấy đủ khoa / bộ môn (kể cả chưa có giảng viên), sắp theo số thứ tự
