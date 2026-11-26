@@ -263,11 +263,12 @@ public static class KetQuaLabel
         _ => "secondary"
     };
 
-    // TrangThai của LanThi: 0 = Đang làm bài, 1 = Đã nộp bài, 2 = Hết giờ
+    // TrangThai của LanThi: 0 = Đang làm bài, 1 = Đã nộp bài, 2 = Hết giờ, 3 = Đình chỉ
     public static string TenTrangThaiLanThi(int trangThai) => trangThai switch
     {
         1 => "Đã nộp bài",
         2 => "Hết giờ",
+        3 => "Đình chỉ",
         _ => "Đang làm bài"
     };
 

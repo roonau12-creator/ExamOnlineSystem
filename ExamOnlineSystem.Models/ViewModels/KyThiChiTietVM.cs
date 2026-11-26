@@ -40,7 +40,7 @@ public class XacNhanVaoThiVM
     // Đủ điều kiện: không có mục nào "Không đạt"
     public bool SanSang => KiemTras.All(k => k.MucDo != MucDoKiemTra.KhongDat);
 
-    // Trang làm bài chưa có -> nút "Bắt đầu làm bài" luôn tắt
+    // Đã có trang làm bài -> cho bật nút "Bắt đầu làm bài"
     public bool CoTrangLamBai { get; set; }
 }
 

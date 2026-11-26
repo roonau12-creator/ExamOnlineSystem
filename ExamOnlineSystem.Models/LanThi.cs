@@ -19,7 +19,7 @@ public class LanThi
     public DateTime ThoiGianBatDau { get; set; } = DateTime.UtcNow;
     public DateTime? ThoiGianNopBai { get; set; }
 
-    // 0: Đang làm bài, 1: Đã nộp bài, 2: Hết giờ
+    // 0: Đang làm bài, 1: Đã nộp bài, 2: Hết giờ, 3: Đình chỉ (mở tab khác khi đang thi)
     public int TrangThai { get; set; }
 
     public double? Diem { get; set; }
