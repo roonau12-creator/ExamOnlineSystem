@@ -7,14 +7,14 @@ public class DeThi
 {
     [Key]
     public int Id { get; set; }
-    public string MaDeThi { get; set; }
-    public string TenDeThi { get; set; }
+    public string MaDeThi { get; set; } = string.Empty;
+    public string TenDeThi { get; set; } = string.Empty;
     public int MonHocId { get; set; }
     [ForeignKey(nameof(MonHocId))]
-    public MonHoc MonHoc { get; set; }
+    public MonHoc MonHoc { get; set; } = null!;
     public int GiaoVienId { get; set; }
     [ForeignKey(nameof(GiaoVienId))]
-    public GiaoVien GiaoVien { get; set; }
+    public GiaoVien GiaoVien { get; set; } = null!;
     public int ThoiLuong { get; set; }
     public double TongDiem { get; set; }
     public int LoaiDeThi { get; set; } //1: Trắc nghiệm 2 : Tư luận 3: kết hợp

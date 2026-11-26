@@ -9,10 +9,10 @@ public class CauHoiDeThi
     public int Id { get; set; }
     public int DeThiId { get; set; }
     [ForeignKey(nameof(DeThiId))]
-    public  DeThi DeThi { get; set; }
+    public  DeThi DeThi { get; set; } = null!;
     public int CauHoiId { get; set; }
     [ForeignKey(nameof(CauHoiId))]
-    public CauHoi CauHoi { get; set; }
+    public CauHoi CauHoi { get; set; } = null!;
     public double Diem { get; set; }
     public int ThuTu { get; set; }
 

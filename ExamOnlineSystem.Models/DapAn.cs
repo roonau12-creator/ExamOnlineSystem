@@ -9,8 +9,8 @@ public class DapAn
     public int Id { get; set; }
     public int CauHoiId { get; set; }
     [ForeignKey(nameof(CauHoiId))]
-    public CauHoi CauHoi { get; set; }
-    public string NoiDung { get; set; }
+    public CauHoi CauHoi { get; set; } = null!;
+    public string NoiDung { get; set; } = string.Empty;
     public bool DapAnDung { get; set; }
     public int ThuTu { get; set; }
 }

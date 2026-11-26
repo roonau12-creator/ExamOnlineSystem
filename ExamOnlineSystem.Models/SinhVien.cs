@@ -8,11 +8,11 @@ public class SinhVien
     [Key]
     public int Id { get; set; }
     // Id của IdentityUser là string (GUID) nên khóa ngoại cũng phải là string
-    public string ApplicationUserId { get; set; }
+    public string ApplicationUserId { get; set; } = string.Empty;
     [ForeignKey(nameof(ApplicationUserId))]
     public ApplicationUser? ApplicationUser { get; set; }
-    public string MaSinhVien { get; set; }
-    public string HoTen { get; set; }
+    public string MaSinhVien { get; set; } = string.Empty;
+    public string HoTen { get; set; } = string.Empty;
     // DateOnly -> cột "date": chỉ lưu ngày, tránh lỗi Npgsql bắt DateTime phải là UTC
     public DateOnly NgaySinh { get; set; }
     public bool GioiTinh { get; set; }
@@ -22,7 +22,7 @@ public class SinhVien
     public int LopId { get; set; }
     [ForeignKey(nameof(LopId))]
     public Lop? Lop { get; set; }
-    public string Email { get; set; }
-    public string SoDienThoai { get; set; }
+    public string Email { get; set; } = string.Empty;
+    public string SoDienThoai { get; set; } = string.Empty;
     
 }
